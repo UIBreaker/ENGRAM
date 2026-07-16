@@ -1,6 +1,5 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/UIBreaker/ENGRAM/main/public/icon-192.png" width="80" alt="ENGRAM Logo" />
 
 # ENGRAM
 
