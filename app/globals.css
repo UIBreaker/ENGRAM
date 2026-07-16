@@ -2,13 +2,14 @@
 
 /* ═══════════════════════════════════════════════════════
    ENGRAM — Design System v3 "Aurora"
-   Inspiration: Linear, Raycast, Vercel, Pitch
+   Optimized for Mobile-First + Performance
 ═══════════════════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   /* Backgrounds */
+  --bg:          #07070F;
   --bg-base:     #07070F;
   --bg-surface:  #0E0E1C;
   --bg-raised:   #141428;
@@ -52,9 +53,20 @@
   --shadow-md:  0 4px 24px rgba(0,0,0,0.4);
   --shadow-lg:  0 8px 48px rgba(0,0,0,0.5);
   --shadow-brand: 0 4px 24px var(--brand-glow);
+
+  /* Touch targets */
+  --touch-min: 44px;
 }
 
-html { scroll-behavior: smooth; height: 100%; }
+/* ── HTML / Body ── */
+html {
+  height: 100%;
+  /* Disable smooth scroll — causes jank on mobile transitions */
+  scroll-behavior: auto;
+  /* Prevent text size adjustment on iOS rotation */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 body {
   background: var(--bg-base);
@@ -63,17 +75,32 @@ body {
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
+  /* Prevent overscroll bounce on iOS */
+  overscroll-behavior: none;
+  /* GPU-accelerate the body layer */
+  -webkit-overflow-scrolling: touch;
 }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(123,104,238,0.25); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(123,104,238,0.5); }
+/* ── Scrollbar (desktop only) ── */
+@media (hover: hover) {
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(123,104,238,0.25); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(123,104,238,0.5); }
+}
 
-/* ── Focus ── */
+/* ── Focus (keyboard only, not touch) ── */
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 6px; }
+:focus:not(:focus-visible) { outline: none; }
+
+/* ── Performance: GPU layers for animated elements ── */
+.flip-inner,
+.flip-face {
+  will-change: transform;
+  transform: translateZ(0);
+}
 
 /* ══════════════════════════════════════
    REUSABLE COMPONENTS
@@ -102,38 +129,52 @@ body {
   background-clip: text;
 }
 
-/* Buttons */
+/* ── Buttons — Mobile optimized ── */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 14px;
   border-radius: var(--r-md);
   border: none;
   cursor: pointer;
-  transition: all 0.18s ease;
+  /* Faster transition on mobile */
+  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
   white-space: nowrap;
   user-select: none;
+  /* Minimum touch target */
+  min-height: var(--touch-min);
   padding: 10px 18px;
   line-height: 1;
+  /* Prevent double-tap zoom on buttons */
+  touch-action: manipulation;
+  /* Prevent iOS tap highlight */
+  -webkit-tap-highlight-color: transparent;
 }
-.btn:active { transform: scale(0.97); }
+.btn:active { transform: scale(0.96); }
+
+/* Disable hover on touch devices */
+@media (hover: hover) {
+  .btn-primary:hover { box-shadow: 0 6px 28px rgba(123,104,238,0.55); filter: brightness(1.08); }
+  .btn-secondary:hover { color: var(--text-1); border-color: var(--border-hi); background: rgba(255,255,255,0.07); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.06); color: var(--text-1); }
+  .btn-danger:hover { background: rgba(251,113,133,0.22); }
+  .btn-success:hover { background: rgba(45,212,191,0.22); }
+}
 
 .btn-primary {
   background: linear-gradient(135deg, #7B68EE 0%, #9B8FF5 100%);
   color: white;
   box-shadow: 0 4px 20px rgba(123,104,238,0.4);
 }
-.btn-primary:hover { box-shadow: 0 6px 28px rgba(123,104,238,0.55); filter: brightness(1.08); }
 
 .btn-secondary {
   background: var(--bg-overlay);
   color: var(--text-2);
   border: 1px solid var(--border-med);
 }
-.btn-secondary:hover { color: var(--text-1); border-color: var(--border-hi); background: rgba(255,255,255,0.07); }
 
 .btn-ghost {
   background: transparent;
@@ -141,35 +182,40 @@ body {
   border: 1px solid transparent;
   padding: 8px;
   border-radius: var(--r-sm);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
 }
-.btn-ghost:hover { background: rgba(255,255,255,0.06); color: var(--text-1); }
 
 .btn-danger {
   background: var(--rose-dim);
   color: var(--rose);
   border: 1px solid rgba(251,113,133,0.25);
 }
-.btn-danger:hover { background: rgba(251,113,133,0.22); }
 
 .btn-success {
   background: var(--teal-dim);
   color: var(--teal);
   border: 1px solid rgba(45,212,191,0.25);
 }
-.btn-success:hover { background: rgba(45,212,191,0.22); }
 
-/* Input */
+/* ── Input — 16px prevents iOS zoom ── */
 .input {
   width: 100%;
   background: rgba(255,255,255,0.04);
   border: 1.5px solid var(--border);
   border-radius: var(--r-md);
   color: var(--text-1);
-  font-size: 14px;
-  padding: 10px 14px;
+  /* 16px is critical: prevents iOS auto-zoom on focus */
+  font-size: 16px;
+  padding: 12px 14px;
   outline: none;
   transition: border-color 0.18s, box-shadow 0.18s;
   font-family: inherit;
+  /* Prevent iOS inner shadow */
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .input:focus {
   border-color: rgba(123,104,238,0.6);
@@ -177,6 +223,9 @@ body {
   background: rgba(255,255,255,0.055);
 }
 .input::placeholder { color: var(--text-4); }
+
+/* Textarea — same rules */
+textarea.input { resize: vertical; min-height: 120px; }
 
 /* Badge */
 .badge {
@@ -191,15 +240,21 @@ body {
 }
 
 /* ══════════════════════════════════════
-   FLIP CARD
+   FLIP CARD — GPU accelerated
 ══════════════════════════════════════ */
-.flip-scene { perspective: 1200px; }
+.flip-scene {
+  perspective: 1200px;
+  /* Isolate stacking context */
+  isolation: isolate;
+}
 .flip-inner {
   position: relative;
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  /* Slightly faster on mobile */
+  transition: transform 0.48s cubic-bezier(0.4, 0.2, 0.2, 1);
+  will-change: transform;
 }
 .flip-inner.flipped { transform: rotateY(180deg); }
 .flip-face {
@@ -207,11 +262,77 @@ body {
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  will-change: transform;
 }
 .flip-back { transform: rotateY(180deg); }
 
 /* ══════════════════════════════════════
    MOBILE SAFE AREA
 ══════════════════════════════════════ */
-.pb-nav { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
+.pb-nav  { padding-bottom: max(80px, calc(64px + env(safe-area-inset-bottom))); }
 .pb-safe { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+
+/* ══════════════════════════════════════
+   REDUCED MOTION SUPPORT
+══════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .flip-inner { transition-duration: 0ms; }
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE UTILITIES
+══════════════════════════════════════ */
+@media (min-width: 768px) {
+  .md-main { margin-left: 224px; }
+  .md-pb-0 { padding-bottom: 0 !important; }
+  /* Restore scroll on desktop */
+  html { scroll-behavior: smooth; }
+  /* Desktop font size for inputs */
+  .input { font-size: 14px; }
+}
+
+/* ══════════════════════════════════════
+   MOBILE-SPECIFIC OVERRIDES
+══════════════════════════════════════ */
+@media (max-width: 767px) {
+  /* Larger text for readability */
+  body { font-size: 15px; }
+
+  /* Full-width modals on small screens */
+  .modal-mobile-full {
+    position: fixed !important;
+    inset: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    overflow-y: auto;
+  }
+
+  /* Bottom sheet modals */
+  .modal-sheet {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
+    max-height: 92dvh;
+    overflow-y: auto;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    animation: slideUp 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  /* Tighter padding on mobile */
+  .p-page { padding: 16px; }
+}

@@ -6,14 +6,20 @@ import BottomNav from "./BottomNav";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    seedSampleData(); // fire-and-forget: seeds DB if empty
+    seedSampleData();
   }, []);
 
   return (
     <div style={{ display: "flex", minHeight: "100dvh" }}>
       <Sidebar />
-      <main style={{ flex: 1, display: "flex", flexDirection: "column" }} className="md-main">
-        <div className="pb-nav md-pb-0">{children}</div>
+      <main
+        style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}
+        className="md-main"
+      >
+        {/* pb-nav adds bottom padding so content clears the mobile nav bar */}
+        <div className="pb-nav md-pb-0" style={{ flex: 1 }}>
+          {children}
+        </div>
       </main>
       <BottomNav />
       <style>{`

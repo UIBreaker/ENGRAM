@@ -444,7 +444,15 @@ export default function FlashcardPage() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (min-width:768px) { .key-hint { display:block !important; } .desktop-hint { display:block; } }
+        /* Hide keyboard hints on touch devices */
+        .key-hint { display:none; }
+        .desktop-hint { display:none; }
+        @media (hover:hover) and (pointer:fine) {
+          .key-hint { display:block !important; }
+          .desktop-hint { display:block !important; }
+        }
+        /* No tap highlight on all interactive elements */
+        button, a { -webkit-tap-highlight-color: transparent; }
       `}</style>
     </div>
   );

@@ -269,7 +269,9 @@ export default function Dashboard() {
 
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
-        @media(max-width:860px){.dashboard-grid{grid-template-columns:1fr!important}}
+        .dashboard-grid{grid-template-columns:1fr}
+        @media(min-width:860px){.dashboard-grid{grid-template-columns:1fr 280px!important}}
+        a{-webkit-tap-highlight-color:transparent}
       `}</style>
     </div>
   );
