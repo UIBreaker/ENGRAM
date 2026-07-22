@@ -1,31 +1,51 @@
 "use client";
 import { useEffect, useState, useMemo, CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
+import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon, Lightbulb } from "lucide-react";
 import { getWords, addWord, deleteWord, updateWord } from "@/lib/db";
-import { Word, TopicTag, TOPIC_TAGS } from "@/lib/types";
+import { Word, TopicTag, TOPIC_TAGS, TOPIC_EMOJI, suggestTopic } from "@/lib/types";
 
 /* ── Topic config ── */
 type TC = { color: string; bg: string; border: string; dot: string };
 const TOPICS: Record<TopicTag, TC> = {
-  "Công việc": { color: "#93C5FD", bg: "rgba(96,165,250,0.12)",  border: "rgba(96,165,250,0.28)",  dot: "#60A5FA" },
-  "Lập trình": { color: "#6EE7B7", bg: "rgba(52,211,153,0.12)",  border: "rgba(52,211,153,0.28)",  dot: "#34D399" },
-  "Đời sống":  { color: "#C4B5FD", bg: "rgba(167,139,250,0.12)", border: "rgba(167,139,250,0.28)", dot: "#A78BFA" },
-  "Du lịch":   { color: "#FCD34D", bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.28)",  dot: "#FBBF24" },
-  "Học thuật": { color: "#FCA88A", bg: "rgba(249,115,22,0.12)",  border: "rgba(249,115,22,0.28)",  dot: "#F97316" },
-  "Khác":      { color: "#CBD5E1", bg: "rgba(148,163,184,0.1)",  border: "rgba(148,163,184,0.2)",  dot: "#94A3B8" },
+  "Công việc":  { color: "#93C5FD", bg: "rgba(96,165,250,0.12)",   border: "rgba(96,165,250,0.28)",   dot: "#60A5FA" },
+  "Lập trình":  { color: "#6EE7B7", bg: "rgba(52,211,153,0.12)",   border: "rgba(52,211,153,0.28)",   dot: "#34D399" },
+  "Đời sống":   { color: "#C4B5FD", bg: "rgba(167,139,250,0.12)",  border: "rgba(167,139,250,0.28)",  dot: "#A78BFA" },
+  "Du lịch":    { color: "#FCD34D", bg: "rgba(251,191,36,0.12)",   border: "rgba(251,191,36,0.28)",   dot: "#FBBF24" },
+  "Học thuật":  { color: "#FCA88A", bg: "rgba(249,115,22,0.12)",   border: "rgba(249,115,22,0.28)",   dot: "#F97316" },
+  "Sức khỏe":   { color: "#86EFAC", bg: "rgba(74,222,128,0.10)",   border: "rgba(74,222,128,0.25)",   dot: "#4ADE80" },
+  "Ẩm thực":    { color: "#FCA5A5", bg: "rgba(252,165,165,0.10)",  border: "rgba(252,165,165,0.25)",  dot: "#F87171" },
+  "Thể thao":   { color: "#67E8F9", bg: "rgba(103,232,249,0.10)",  border: "rgba(103,232,249,0.25)",  dot: "#22D3EE" },
+  "Kinh tế":    { color: "#6EE7B7", bg: "rgba(52,211,153,0.08)",   border: "rgba(52,211,153,0.22)",   dot: "#10B981" },
+  "Nghệ thuật": { color: "#F9A8D4", bg: "rgba(249,168,212,0.10)",  border: "rgba(249,168,212,0.25)",  dot: "#EC4899" },
+  "Khoa học":   { color: "#A5B4FC", bg: "rgba(165,180,252,0.10)",  border: "rgba(165,180,252,0.25)",  dot: "#818CF8" },
+  "Môi trường": { color: "#BEF264", bg: "rgba(190,242,100,0.10)",  border: "rgba(190,242,100,0.22)",  dot: "#84CC16" },
+  "Cảm xúc":    { color: "#FDA4AF", bg: "rgba(253,164,175,0.10)",  border: "rgba(253,164,175,0.25)",  dot: "#FB7185" },
+  "Giao tiếp":  { color: "#93C5FD", bg: "rgba(147,197,253,0.10)",  border: "rgba(147,197,253,0.22)",  dot: "#38BDF8" },
+  "Thành ngữ":  { color: "#FDE68A", bg: "rgba(253,230,138,0.10)",  border: "rgba(253,230,138,0.22)",  dot: "#FBBF24" },
+  "Khác":       { color: "#CBD5E1", bg: "rgba(148,163,184,0.08)",  border: "rgba(148,163,184,0.18)",  dot: "#94A3B8" },
 };
 
 const DIFF       = ["Mới","Đang học","Tạm nhớ","Khá thuộc","Thuộc","Rất thuộc"];
 const DIFF_COLOR = ["var(--text-4)","#F59E0B","#7B68EE","#2DD4BF","#2DD4BF","#2DD4BF"];
 
 const TOPIC_GRADIENTS: Record<TopicTag, string> = {
-  "Công việc": "linear-gradient(135deg,#1e3a5f,#2563eb)",
-  "Lập trình": "linear-gradient(135deg,#064e3b,#059669)",
-  "Đời sống":  "linear-gradient(135deg,#3b1d8a,#7c3aed)",
-  "Du lịch":   "linear-gradient(135deg,#78350f,#d97706)",
-  "Học thuật": "linear-gradient(135deg,#7c2d12,#ea580c)",
-  "Khác":      "linear-gradient(135deg,#1e293b,#475569)",
+  "Công việc":  "linear-gradient(135deg,#1e3a5f,#2563eb)",
+  "Lập trình":  "linear-gradient(135deg,#064e3b,#059669)",
+  "Đời sống":   "linear-gradient(135deg,#3b1d8a,#7c3aed)",
+  "Du lịch":    "linear-gradient(135deg,#78350f,#d97706)",
+  "Học thuật":  "linear-gradient(135deg,#7c2d12,#ea580c)",
+  "Sức khỏe":   "linear-gradient(135deg,#064e3b,#16a34a)",
+  "Ẩm thực":    "linear-gradient(135deg,#7f1d1d,#dc2626)",
+  "Thể thao":   "linear-gradient(135deg,#0c4a6e,#0ea5e9)",
+  "Kinh tế":    "linear-gradient(135deg,#022c22,#059669)",
+  "Nghệ thuật": "linear-gradient(135deg,#831843,#ec4899)",
+  "Khoa học":   "linear-gradient(135deg,#1e1b4b,#6366f1)",
+  "Môi trường": "linear-gradient(135deg,#1a2e05,#65a30d)",
+  "Cảm xúc":    "linear-gradient(135deg,#4c0519,#f43f5e)",
+  "Giao tiếp":  "linear-gradient(135deg,#0c2a4a,#3b82f6)",
+  "Thành ngữ":  "linear-gradient(135deg,#422006,#b45309)",
+  "Khác":       "linear-gradient(135deg,#1e293b,#475569)",
 };
 
 /* ── Shared Components ── */
@@ -99,6 +119,20 @@ function AddModal({ onClose, onAdd }: { onClose:()=>void; onAdd:(w:Word)=>void }
   });
   const [busy, setBusy] = useState(false);
   const [showImgPreview, setShowImgPreview] = useState(false);
+  const [userPickedTopic, setUserPickedTopic] = useState(false);
+
+  // Auto-suggest topic based on word/meaning
+  const suggestedTopic = useMemo(
+    () => suggestTopic(f.word, f.meaning),
+    [f.word, f.meaning]
+  );
+
+  // Auto-apply suggestion only if user hasn't manually picked a topic
+  useEffect(() => {
+    if (!userPickedTopic && suggestedTopic && suggestedTopic !== f.topic) {
+      setF(prev => ({ ...prev, topic: suggestedTopic }));
+    }
+  }, [suggestedTopic, userPickedTopic]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,17 +242,31 @@ function AddModal({ onClose, onAdd }: { onClose:()=>void; onAdd:(w:Word)=>void }
 
           {/* Topics */}
           <div>
-            <label style={LabelStyle}>Chủ đề</label>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+              <label style={LabelStyle}>Chủ đề</label>
+              {suggestedTopic && (
+                <span style={{ display:"flex", alignItems:"center", gap:4, fontSize:11, color:"#F59E0B", fontWeight:600 }}>
+                  <Lightbulb size={11} /> Gợi ý: {TOPIC_EMOJI[suggestedTopic]} {suggestedTopic}
+                </span>
+              )}
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:6 }}>
               {TOPIC_TAGS.map(tag => {
                 const c = TOPICS[tag], active = f.topic===tag;
+                const isSuggested = tag === suggestedTopic && !userPickedTopic;
                 return (
-                  <button key={tag} type="button" onClick={()=>setF({...f,topic:tag})}
-                    style={{ padding:"5px 12px", borderRadius:99, fontSize:12, fontWeight:600,
-                      border:`1.5px solid ${active?c.border:"var(--border)"}`,
-                      background:active?c.bg:"transparent", color:active?c.color:"var(--text-3)",
-                      cursor:"pointer", transition:"all 0.15s" }}>
-                    {tag}
+                  <button key={tag} type="button" onClick={()=>{ setF({...f,topic:tag}); setUserPickedTopic(true); }}
+                    style={{
+                      padding:"7px 4px", borderRadius:10, fontSize:11, fontWeight:600,
+                      border:`1.5px solid ${active ? c.border : isSuggested ? "rgba(245,158,11,0.35)" : "var(--border)"}`,
+                      background:active ? c.bg : isSuggested ? "rgba(245,158,11,0.07)" : "transparent",
+                      color:active ? c.color : isSuggested ? "#F59E0B" : "var(--text-3)",
+                      cursor:"pointer", transition:"all 0.15s",
+                      display:"flex", flexDirection:"column", alignItems:"center", gap:3,
+                      WebkitTapHighlightColor:"transparent",
+                    }}>
+                    <span style={{ fontSize:16 }}>{TOPIC_EMOJI[tag]}</span>
+                    <span style={{ lineHeight:1.2, textAlign:"center", wordBreak:"break-word" }}>{tag}</span>
                   </button>
                 );
               })}

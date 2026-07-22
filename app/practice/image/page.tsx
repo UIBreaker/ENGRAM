@@ -11,7 +11,7 @@ function shuffle<T>(arr: T[]): T[] { return [...arr].sort(() => Math.random() - 
 
 function buildQ(all: Word[]) {
   const word = all[Math.floor(Math.random() * all.length)];
-  const imgSrc = word.imageUrl || `https://source.unsplash.com/featured/600x400/?${encodeURIComponent(word.word)},object`;
+  const imgSrc = word.imageUrl || `https://loremflickr.com/600/400/${encodeURIComponent(word.word)}`;
   const opts   = shuffle([word, ...shuffle(all.filter(w => w.id !== word.id)).slice(0, 3)]);
   return { word, imgSrc, opts };
 }
