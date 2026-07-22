@@ -16,7 +16,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}
         className="md-main"
       >
-        {/* pb-nav adds bottom padding so content clears the mobile nav bar */}
+        {/* pb-nav: clears mobile bottom nav bar */}
         <div className="pb-nav md-pb-0" style={{ flex: 1 }}>
           {children}
         </div>
@@ -24,7 +24,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <BottomNav />
       <style>{`
         @media (min-width: 768px) {
-          .md-main  { margin-left: 224px; }
+          .md-main  { margin-left: 220px; }
           .md-pb-0  { padding-bottom: 0 !important; }
         }
       `}</style>

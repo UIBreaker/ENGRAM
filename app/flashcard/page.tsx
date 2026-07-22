@@ -306,27 +306,295 @@ function Done({ stats, onRestart }:{ stats:{total:number;correct:number;forgot:n
   );
 }
 
+/* ── Chế độ ôn tập Selector ── */
+import { TopicTag, TOPIC_TAGS } from "@/lib/types";
+import { getWords } from "@/lib/db";
+
+function ModeSelector({
+  dueCount,
+  hardCount,
+  allCount,
+  words,
+  onSelectMode,
+}: {
+  dueCount: number;
+  hardCount: number;
+  allCount: number;
+  words: Word[];
+  onSelectMode: (mode: "due" | "hard" | "all" | "topic", topic?: TopicTag) => void;
+}) {
+  const [showTopics, setShowTopics] = useState(false);
+
+  const topicCounts = TOPIC_TAGS.reduce((acc, t) => {
+    acc[t] = words.filter(w => w.topic === t).length;
+    return acc;
+  }, {} as Record<TopicTag, number>);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      style={{ display: "flex", flexDirection: "column", gap: 16 }}
+    >
+      <div style={{ textAlign: "center", marginBottom: 8 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-1)" }}>Chọn Chế Độ Ôn Tập</h2>
+        <p style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>
+          Luyện tập và củng cố kiến thức theo cách của bạn
+        </p>
+      </div>
+
+      {!showTopics ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Due Words option */}
+          <button
+            onClick={() => onSelectMode("due")}
+            className="btn btn-secondary"
+            style={{
+              padding: "16px 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              textAlign: "left",
+              borderRadius: "var(--r-md)",
+              border: dueCount > 0 ? "1px solid rgba(123,104,238,0.3)" : "1px solid var(--border)",
+              background: dueCount > 0 ? "rgba(123,104,238,0.06)" : "var(--bg-raised)",
+              minHeight: "72px"
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>
+                Từ cần ôn hôm nay
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
+                Ôn theo thuật toán lặp lại ngắt quãng (SM-2)
+              </div>
+            </div>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                padding: "4px 10px",
+                borderRadius: 99,
+                background: dueCount > 0 ? "var(--brand)" : "rgba(255,255,255,0.05)",
+                color: dueCount > 0 ? "white" : "var(--text-3)",
+              }}
+            >
+              {dueCount} từ
+            </span>
+          </button>
+
+          {/* Hard Words option */}
+          <button
+            onClick={() => onSelectMode("hard")}
+            className="btn btn-secondary"
+            style={{
+              padding: "16px 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              textAlign: "left",
+              borderRadius: "var(--r-md)",
+              background: "var(--bg-raised)",
+              minHeight: "72px"
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>Từ hay quên</div>
+              <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
+                Tập trung luyện tập các từ khó hoặc ít chính xác
+              </div>
+            </div>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                padding: "4px 10px",
+                borderRadius: 99,
+                background: hardCount > 0 ? "rgba(251,113,133,0.15)" : "rgba(255,255,255,0.05)",
+                color: hardCount > 0 ? "#FB7185" : "var(--text-3)",
+                border: hardCount > 0 ? "1px solid rgba(251,113,133,0.3)" : "none",
+              }}
+            >
+              {hardCount} từ
+            </span>
+          </button>
+
+          {/* By Topic option */}
+          <button
+            onClick={() => setShowTopics(true)}
+            className="btn btn-secondary"
+            style={{
+              padding: "16px 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              textAlign: "left",
+              borderRadius: "var(--r-md)",
+              background: "var(--bg-raised)",
+              minHeight: "72px"
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>
+                Ôn theo chủ đề
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
+                Chọn chủ đề cụ thể (Lập trình, Du lịch, Công việc...)
+              </div>
+            </div>
+            <ChevronRight size={16} color="var(--text-3)" />
+          </button>
+
+          {/* All Words option */}
+          <button
+            onClick={() => onSelectMode("all")}
+            className="btn btn-secondary"
+            style={{
+              padding: "16px 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              textAlign: "left",
+              borderRadius: "var(--r-md)",
+              background: "var(--bg-raised)",
+              minHeight: "72px"
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>
+                Ôn tất cả từ vựng
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
+                Luyện tập không giới hạn toàn bộ từ trong kho
+              </div>
+            </div>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                padding: "4px 10px",
+                borderRadius: 99,
+                background: "rgba(255,255,255,0.05)",
+                color: "var(--text-3)",
+              }}
+            >
+              {allCount} từ
+            </span>
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Back button */}
+          <button
+            onClick={() => setShowTopics(false)}
+            className="btn btn-secondary"
+            style={{ padding: "8px 12px", fontSize: 12, alignSelf: "flex-start", minHeight: 34 }}
+          >
+            <ArrowLeft size={13} /> Quay lại
+          </button>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+            {TOPIC_TAGS.map(topic => {
+              const count = topicCounts[topic] || 0;
+              return (
+                <button
+                  key={topic}
+                  onClick={() => onSelectMode("topic", topic)}
+                  disabled={count === 0}
+                  className="btn btn-secondary"
+                  style={{
+                    padding: "16px 12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 6,
+                    borderRadius: "var(--r-md)",
+                    background: "var(--bg-raised)",
+                    opacity: count === 0 ? 0.5 : 1,
+                    cursor: count === 0 ? "not-allowed" : "pointer",
+                    minHeight: "80px"
+                  }}
+                >
+                  <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text-1)" }}>
+                    {topic}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: count > 0 ? "#9B8FF5" : "var(--text-4)",
+                      padding: "2px 8px",
+                      borderRadius: 99,
+                      background: "rgba(123,104,238,0.1)",
+                    }}
+                  >
+                    {count} từ
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 /* ── Main ── */
 export default function FlashcardPage() {
-  const [queue,  setQueue]  = useState<Word[]>([]);
-  const [idx,    setIdx]    = useState(0);
-  const [flipped,setFlipped]= useState(false);
-  const [done,   setDone]   = useState(false);
-  const [stats,  setStats]  = useState({total:0,correct:0,forgot:0});
-  const [loading,setLoading]= useState(true);
+  const [words, setWords]         = useState<Word[]>([]);
+  const [queue,  setQueue]        = useState<Word[]>([]);
+  const [idx,    setIdx]          = useState(0);
+  const [flipped,setFlipped]      = useState(false);
+  const [done,   setDone]         = useState(false);
+  const [stats,  setStats]        = useState({total:0,correct:0,forgot:0});
+  const [loading,setLoading]      = useState(true);
+  const [mode,   setMode]         = useState<"due" | "hard" | "all" | "topic" | null>(null);
+  const [chosenTopic, setChosenTopic] = useState<TopicTag | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const due = await getDueWords();
-    setQueue(due); setIdx(0); setFlipped(false);
-    setDone(false); setStats({total:0,correct:0,forgot:0}); setLoading(false);
+    const all = await getWords();
+    setWords(all);
+    setQueue([]);
+    setMode(null);
+    setChosenTopic(null);
+    setDone(false);
+    setStats({total:0,correct:0,forgot:0});
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
+  const startSession = (selectedMode: "due" | "hard" | "all" | "topic", topic?: TopicTag) => {
+    setLoading(true);
+    setMode(selectedMode);
+    if (topic) setChosenTopic(topic);
+
+    let filteredQueue: Word[] = [];
+    if (selectedMode === "due") {
+      filteredQueue = words.filter(w => new Date(w.nextReview) <= new Date());
+    } else if (selectedMode === "hard") {
+      filteredQueue = [...words]
+        .filter(w => w.difficulty < 3)
+        .sort((a, b) => a.difficulty - b.difficulty);
+    } else if (selectedMode === "all") {
+      filteredQueue = [...words].sort(() => Math.random() - 0.5);
+    } else if (selectedMode === "topic" && topic) {
+      filteredQueue = words.filter(w => w.topic === topic).sort(() => Math.random() - 0.5);
+    }
+
+    setQueue(filteredQueue);
+    setIdx(0);
+    setFlipped(false);
+    setDone(false);
+    setStats({total:0,correct:0,forgot:0});
+    setLoading(false);
+  };
+
   useEffect(() => {
     const h = (e:KeyboardEvent) => {
-      if (done || !queue[idx]) return;
+      if (done || mode === null || !queue[idx]) return;
       if (e.code==="Space") { e.preventDefault(); setFlipped(f=>!f); }
       if (flipped) {
         if (e.key==="1") rate("forgot");
@@ -337,7 +605,7 @@ export default function FlashcardPage() {
     window.addEventListener("keydown",h);
     return ()=>window.removeEventListener("keydown",h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [done,idx,queue,flipped]);
+  }, [done,idx,queue,flipped,mode]);
 
   const rate = async (r:FlashcardRating) => {
     const w = queue[idx]; if(!w) return;
@@ -357,7 +625,20 @@ export default function FlashcardPage() {
     </div>
   );
 
+  const dueCount = words.filter(w => new Date(w.nextReview) <= new Date()).length;
+  const hardCount = words.filter(w => w.difficulty < 3).length;
+  const allCount = words.length;
+
   const cur = queue[idx];
+
+  // Get display text for the header
+  const getSubtext = () => {
+    if (mode === "due") return "Chế độ: Từ đến hạn";
+    if (mode === "hard") return "Chế độ: Từ hay quên";
+    if (mode === "all") return "Chế độ: Ôn tất cả";
+    if (mode === "topic") return `Chủ đề: ${chosenTopic}`;
+    return `Tổng kho: ${allCount} từ`;
+  };
 
   return (
     <div style={{ maxWidth:480, margin:"0 auto", padding:"24px 20px",
@@ -365,21 +646,34 @@ export default function FlashcardPage() {
 
       {/* Header */}
       <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-        <Link href="/" style={{ textDecoration:"none" }}>
-          <button className="btn btn-secondary" style={{ padding:10, borderRadius:"var(--r-sm)" }}>
+        {mode === null ? (
+          <Link href="/" style={{ textDecoration:"none" }}>
+            <button className="btn btn-secondary" style={{ padding:10, borderRadius:"var(--r-sm)" }}>
+              <ArrowLeft size={17} color="var(--text-2)" />
+            </button>
+          </Link>
+        ) : (
+          <button onClick={load} className="btn btn-secondary" style={{ padding:10, borderRadius:"var(--r-sm)" }}>
             <ArrowLeft size={17} color="var(--text-2)" />
           </button>
-        </Link>
+        )}
         <div style={{ flex:1 }}>
           <div style={{ fontWeight:800, fontSize:16, color:"var(--text-1)",
             display:"flex", alignItems:"center", gap:8 }}>
             <BrainCircuit size={17} color="#7B68EE" /> Phòng ôn tập
           </div>
-          {!done && queue.length>0 && (
-            <div style={{ fontSize:12, color:"var(--text-3)", marginTop:2 }}>
-              {idx+1} / {queue.length} từ
-            </div>
-          )}
+          <div style={{ fontSize:12, color:"var(--text-3)", marginTop:2, display: "flex", alignItems: "center", gap: 8 }}>
+            <span>{getSubtext()}</span>
+            {mode !== null && !done && (
+              <button 
+                onClick={load} 
+                className="btn btn-ghost" 
+                style={{ padding: "2px 6px", fontSize: 10, minHeight: 20, minWidth: 20, background: "rgba(255,255,255,0.05)" }}
+              >
+                Đổi
+              </button>
+            )}
+          </div>
         </div>
         {!done && queue.length>0 && (
           <div style={{ fontSize:13, fontWeight:700, padding:"5px 12px", borderRadius:99,
@@ -398,7 +692,36 @@ export default function FlashcardPage() {
 
       {/* Content */}
       <AnimatePresence mode="wait">
-        {done ? (
+        {mode === null ? (
+          words.length === 0 ? (
+            <motion.div key="empty-all" initial={{opacity:0}} animate={{opacity:1}}
+              style={{ flex:1, display:"flex", flexDirection:"column",
+                alignItems:"center", justifyContent:"center", gap:16, textAlign:"center" }}>
+              <div style={{ width:72, height:72, borderRadius:"50%",
+                background:"var(--brand-dim)", border:"2px solid rgba(123,104,238,0.25)",
+                display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <BrainCircuit size={32} color="#9B8FF5" />
+              </div>
+              <div>
+                <div style={{ fontSize:20, fontWeight:800, color:"var(--text-1)", marginBottom:6 }}>
+                  Kho từ vựng trống!
+                </div>
+                <div style={{ fontSize:14, color:"var(--text-3)" }}>Hãy thêm từ mới vào kho để có thể bắt đầu ôn tập nhé.</div>
+              </div>
+              <Link href="/vocabulary">
+                <button className="btn btn-primary" style={{ padding:"12px 24px" }}>Thêm từ mới</button>
+              </Link>
+            </motion.div>
+          ) : (
+            <ModeSelector
+              dueCount={dueCount}
+              hardCount={hardCount}
+              allCount={allCount}
+              words={words}
+              onSelectMode={startSession}
+            />
+          )
+        ) : done ? (
           <Done key="done" stats={stats} onRestart={load} />
         ) : queue.length===0 ? (
           <motion.div key="empty" initial={{opacity:0}} animate={{opacity:1}}
@@ -411,13 +734,17 @@ export default function FlashcardPage() {
             </div>
             <div>
               <div style={{ fontSize:20, fontWeight:800, color:"var(--text-1)", marginBottom:6 }}>
-                Tất cả đã ôn xong! 🎉
+                Không có từ nào! 🎉
               </div>
-              <div style={{ fontSize:14, color:"var(--text-3)" }}>Không có từ nào cần ôn hôm nay</div>
+              <div style={{ fontSize:14, color:"var(--text-3)" }}>
+                {mode === "due" && "Không có từ nào đến hạn ôn tập hôm nay."}
+                {mode === "hard" && "Không có từ nào được phân loại là khó học."}
+                {mode === "topic" && `Không có từ nào thuộc chủ đề ${chosenTopic}.`}
+              </div>
             </div>
-            <Link href="/vocabulary">
-              <button className="btn btn-primary" style={{ padding:"12px 24px" }}>Thêm từ mới</button>
-            </Link>
+            <button onClick={load} className="btn btn-primary" style={{ padding:"12px 24px" }}>
+              Chọn chế độ khác
+            </button>
           </motion.div>
         ) : (
           <motion.div key={cur?.id}
