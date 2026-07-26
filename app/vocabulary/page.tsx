@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState, useMemo, CSSProperties } from "react";
+import { useEffect, useState, useMemo, useRef, CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon, Lightbulb } from "lucide-react";
+import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon, Lightbulb, FileSpreadsheet, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
 import { getWords, addWord, deleteWord, updateWord } from "@/lib/db";
 import { Word, TopicTag, TOPIC_TAGS, TOPIC_EMOJI, suggestTopic } from "@/lib/types";
+import * as XLSX from "xlsx";
 
 /* ── Topic config ── */
 type TC = { color: string; bg: string; border: string; dot: string };
@@ -421,6 +422,235 @@ function DetailModal({ word, onClose, onDelete, onUpdate }: {
   );
 }
 
+/* ── Excel Import Modal ── */
+interface ExcelRow {
+  topic: string;
+  word: string;
+  phonetics: string;
+  meaning: string;
+  imageUrl: string;
+  _valid: boolean;
+  _error?: string;
+}
+
+function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImported: (count: number) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [rows, setRows] = useState<ExcelRow[]>([]);
+  const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [done, setDone] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const parseFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const wb = XLSX.read(data, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw: string[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" }) as string[][];
+
+      // Auto-detect header row: skip rows until we find the data
+      let startRow = 0;
+      if (raw.length > 0) {
+        const headerRow = raw[0].map(c => String(c).toLowerCase());
+        // If first row looks like a header (contains "từ" or "word" or "meaning"), skip it
+        if (headerRow.some(h => h.includes("từ") || h.includes("word") || h.includes("nghĩa") || h.includes("meaning") || h.includes("chủ") || h.includes("phiên"))) {
+          startRow = 1;
+        }
+      }
+
+      const parsed: ExcelRow[] = [];
+      for (let i = startRow; i < raw.length; i++) {
+        const r = raw[i];
+        if (!r || r.every(c => !String(c).trim())) continue; // skip empty rows
+        const topic   = String(r[0] ?? "").trim();
+        const word    = String(r[1] ?? "").trim();
+        const phonetics = String(r[2] ?? "").trim();
+        const meaning = String(r[3] ?? "").trim();
+        const imageUrl = String(r[4] ?? "").trim();
+
+        const _valid = word.length > 0 && meaning.length > 0;
+        const _error = !word ? "Thiếu từ tiếng Anh" : !meaning ? "Thiếu nghĩa tiếng Việt" : undefined;
+        parsed.push({ topic, word, phonetics, meaning, imageUrl, _valid, _error });
+      }
+      setRows(parsed);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleFile = (f: File | null) => {
+    if (!f) return;
+    if (!f.name.match(/\.(xlsx|xls|csv)$/i)) {
+      alert("Chỉ hỗ trợ file .xlsx, .xls hoặc .csv!");
+      return;
+    }
+    setRows([]);
+    setDone(false);
+    setProgress(0);
+    parseFile(f);
+  };
+
+  const validRows = rows.filter(r => r._valid);
+
+  const handleImport = async () => {
+    if (validRows.length === 0) return;
+    setImporting(true);
+    setProgress(0);
+    let count = 0;
+    for (let i = 0; i < validRows.length; i++) {
+      const r = validRows[i];
+      const topicTag = (TOPIC_TAGS.includes(r.topic as TopicTag) ? r.topic : suggestTopic(r.word, r.meaning) ?? "Khác") as TopicTag;
+      try {
+        await addWord({
+          word: r.word,
+          phonetics: r.phonetics,
+          meaning: r.meaning,
+          example: "",
+          topic: topicTag,
+          imageUrl: r.imageUrl || undefined,
+        });
+        count++;
+      } catch { /* skip duplicates/errors */ }
+      setProgress(Math.round(((i + 1) / validRows.length) * 100));
+    }
+    setImporting(false);
+    setDone(true);
+    onImported(count);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+
+      <motion.div initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        style={{ width: "100%", maxWidth: 680, maxHeight: "90dvh", display: "flex", flexDirection: "column",
+          background: "#0E0E1A", border: "1px solid rgba(123,104,238,0.25)",
+          borderRadius: "var(--r-xl)", overflow: "hidden" }}>
+
+        {/* Modal Header */}
+        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <FileSpreadsheet size={20} color="#4ADE80" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-1)" }}>Nhập từ vựng từ Excel</div>
+            <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>Hỗ trợ .xlsx, .xls, .csv · Cột: Chủ đề | Từ Anh | Phiên âm | Nghĩa Việt | Link ảnh</div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "var(--text-4)" }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Drop Zone */}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
+            onClick={() => fileRef.current?.click()}
+            style={{
+              padding: "28px 20px", borderRadius: "var(--r-lg)", textAlign: "center", cursor: "pointer",
+              border: `2px dashed ${dragOver ? "#4ADE80" : "rgba(123,104,238,0.3)"}`,
+              background: dragOver ? "rgba(74,222,128,0.07)" : "rgba(123,104,238,0.04)",
+              transition: "all 0.2s ease",
+            }}>
+            <Upload size={28} color={dragOver ? "#4ADE80" : "#7B68EE"} style={{ margin: "0 auto 10px" }} />
+            <div style={{ fontWeight: 700, color: "var(--text-1)", fontSize: 14 }}>Kéo thả file vào đây hoặc bấm để chọn</div>
+            <div style={{ fontSize: 12, color: "var(--text-4)", marginTop: 4 }}>Hỗ trợ .xlsx, .xls, .csv</div>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: "none" }}
+              onChange={(e) => handleFile(e.target.files?.[0] ?? null)} />
+          </div>
+
+          {/* Format hint */}
+          <div style={{ padding: "10px 14px", borderRadius: "var(--r-md)", background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.2)", fontSize: 12, color: "#F59E0B", lineHeight: 1.5 }}>
+            <strong>📋 Định dạng file:</strong> Hàng đầu tiên là tiêu đề (sẽ tự bỏ qua). Từ hàng 2 trở đi: <br />
+            <span style={{ fontFamily: "monospace", background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: 4, display: "inline-block", marginTop: 4 }}>Chủ đề | Từ tiếng Anh | Phiên âm IPA | Nghĩa tiếng Việt | Link ảnh (tuỳ chọn)</span>
+          </div>
+
+          {/* Preview Table */}
+          {rows.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)" }}>
+                  Xem trước: <span style={{ color: "#4ADE80" }}>{validRows.length} từ hợp lệ</span>
+                  {rows.length - validRows.length > 0 && <span style={{ color: "#FB7185", marginLeft: 8 }}>{rows.length - validRows.length} lỗi</span>}
+                </div>
+              </div>
+
+              <div style={{ maxHeight: 280, overflowY: "auto", borderRadius: "var(--r-md)", border: "1px solid var(--border)" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.03)" }}>
+                      <th style={{ padding: "8px 10px", textAlign: "left", color: "var(--text-3)", fontWeight: 600 }}>Trạng thái</th>
+                      <th style={{ padding: "8px 10px", textAlign: "left", color: "var(--text-3)", fontWeight: 600 }}>Từ tiếng Anh</th>
+                      <th style={{ padding: "8px 10px", textAlign: "left", color: "var(--text-3)", fontWeight: 600 }}>Nghĩa</th>
+                      <th style={{ padding: "8px 10px", textAlign: "left", color: "var(--text-3)", fontWeight: 600 }}>Chủ đề</th>
+                      <th style={{ padding: "8px 10px", textAlign: "left", color: "var(--text-3)", fontWeight: 600 }}>Phiên âm</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r, i) => (
+                      <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: r._valid ? "transparent" : "rgba(251,113,133,0.04)" }}>
+                        <td style={{ padding: "7px 10px" }}>
+                          {r._valid
+                            ? <CheckCircle2 size={14} color="#4ADE80" />
+                            : <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#FB7185" }}><AlertCircle size={14} /><span style={{ fontSize: 10 }}>{r._error}</span></span>}
+                        </td>
+                        <td style={{ padding: "7px 10px", color: "var(--text-1)", fontWeight: 600 }}>{r.word || <span style={{ color: "var(--text-4)" }}>—</span>}</td>
+                        <td style={{ padding: "7px 10px", color: "var(--text-2)" }}>{r.meaning || <span style={{ color: "var(--text-4)" }}>—</span>}</td>
+                        <td style={{ padding: "7px 10px", color: "var(--text-3)" }}>{r.topic || <span style={{ color: "var(--text-4)" }}>Tự động</span>}</td>
+                        <td style={{ padding: "7px 10px", color: "var(--text-4)", fontFamily: "monospace", fontSize: 11 }}>{r.phonetics}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Progress bar while importing */}
+          {importing && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" }}>
+                <motion.div animate={{ width: `${progress}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#4ADE80,#2DD4BF)", borderRadius: 99 }} />
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", textAlign: "center" }}>Đang nhập... {progress}%</div>
+            </div>
+          )}
+
+          {/* Success message */}
+          {done && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              style={{ padding: "14px", borderRadius: "var(--r-md)", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", textAlign: "center" }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>🎉</div>
+              <div style={{ fontWeight: 700, color: "#4ADE80", fontSize: 14 }}>Nhập thành công {validRows.length} từ vựng!</div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>Kho từ vựng đã được cập nhật tự động</div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)", display: "flex", gap: 10, flexShrink: 0 }}>
+          <button onClick={onClose} className="btn btn-secondary" style={{ flex: 1, padding: "11px" }}>Đóng</button>
+          {!done && (
+            <button onClick={handleImport} disabled={validRows.length === 0 || importing} className="btn btn-primary"
+              style={{ flex: 2, padding: "11px", background: validRows.length > 0 ? "linear-gradient(135deg,#4ADE80,#2DD4BF)" : undefined, color: validRows.length > 0 ? "#0A1A10" : undefined }}>
+              {importing ? `Đang nhập ${progress}%...` : `Nhập ${validRows.length} từ vào Supabase`}
+            </button>
+          )}
+          {done && (
+            <button onClick={() => { setRows([]); setDone(false); }} className="btn btn-secondary" style={{ flex: 2, padding: "11px" }}>
+              Nhập file khác
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 /* ── Main Page ── */
 export default function VocabularyPage() {
   const [words, setWords]         = useState<Word[]>([]);
@@ -429,6 +659,7 @@ export default function VocabularyPage() {
   const [sort, setSort]           = useState<"createdAt"|"word"|"difficulty">("createdAt");
   const [asc, setAsc]             = useState(false);
   const [showAdd, setShowAdd]     = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [selected, setSelected]   = useState<Word|null>(null);
   const [showFilter, setShowFilter] = useState(false);
 
@@ -481,9 +712,14 @@ export default function VocabularyPage() {
             · {words.filter(w=>w.imageUrl).length} từ có ảnh
           </div>
         </div>
-        <button onClick={()=>setShowAdd(true)} className="btn btn-primary" style={{ padding:"10px 18px" }}>
-          <Plus size={16}/> Thêm từ
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setShowImport(true)} className="btn btn-secondary" style={{ padding: "10px 16px", border: "1.5px solid rgba(74,222,128,0.35)", color: "#4ADE80", background: "rgba(74,222,128,0.07)" }}>
+            <FileSpreadsheet size={16} /> Nhập Excel
+          </button>
+          <button onClick={()=>setShowAdd(true)} className="btn btn-primary" style={{ padding:"10px 18px" }}>
+            <Plus size={16}/> Thêm từ
+          </button>
+        </div>
       </div>
 
       {/* Search + Filter */}
@@ -651,6 +887,15 @@ export default function VocabularyPage() {
       <AnimatePresence>
         {showAdd && <AddModal onClose={()=>setShowAdd(false)} onAdd={handleAdd} />}
         {selected && <DetailModal word={selected} onClose={()=>setSelected(null)} onDelete={handleDelete} onUpdate={handleUpdate} />}
+        {showImport && (
+          <ExcelImportModal
+            onClose={() => setShowImport(false)}
+            onImported={(count) => {
+              getWords().then(setWords);
+              if (count > 0) setTimeout(() => setShowImport(false), 2500);
+            }}
+          />
+        )}
       </AnimatePresence>
 
       <style>{`
