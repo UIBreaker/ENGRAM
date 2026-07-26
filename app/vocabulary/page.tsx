@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useMemo, useRef, CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon, Lightbulb, FileSpreadsheet, Upload, AlertCircle, CheckCircle2, Wrench, Copy } from "lucide-react";
+import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon, Lightbulb, FileSpreadsheet, Upload, AlertCircle, CheckCircle2, Wrench, Copy, ChevronDown as ChevDown } from "lucide-react";
 import { getWords, addWord, deleteWord, updateWord } from "@/lib/db";
 import { Word, TopicTag, TOPIC_TAGS, TOPIC_EMOJI, suggestTopic } from "@/lib/types";
 import * as XLSX from "xlsx";
@@ -885,6 +885,263 @@ function DuplicateCleanupModal({ words, onClose, onCleaned }: {
   );
 }
 
+/* ── Image Fix Modal ── */
+function ImageFixModal({ words, onClose, onUpdated }: {
+  words: Word[];
+  onClose: () => void;
+  onUpdated: (updates: { id: string; imageUrl: string }[]) => void;
+}) {
+  // Phase 1: scan all words with imageUrl to detect broken ones
+  const [scanning, setScanning] = useState(true);
+  const [brokenIds, setBrokenIds] = useState<Set<string>>(new Set());
+  const [scanProgress, setScanProgress] = useState(0);
+
+  const noImageWords = useMemo(() => words.filter(w => !w.imageUrl), [words]);
+  const hasImageWords = useMemo(() => words.filter(w => !!w.imageUrl), [words]);
+
+  useEffect(() => {
+    if (hasImageWords.length === 0) { setScanning(false); return; }
+    let completed = 0;
+    const broken = new Set<string>();
+    hasImageWords.forEach(w => {
+      const img = new window.Image();
+      const finish = () => {
+        completed++;
+        setScanProgress(Math.round((completed / hasImageWords.length) * 100));
+        if (completed === hasImageWords.length) { setBrokenIds(new Set(broken)); setScanning(false); }
+      };
+      img.onload = finish;
+      img.onerror = () => { broken.add(w.id); finish(); };
+      img.src = w.imageUrl!;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Combined list: no image + broken image
+  const fixWords = useMemo(() => [
+    ...noImageWords,
+    ...words.filter(w => brokenIds.has(w.id)),
+  ], [words, noImageWords, brokenIds]);
+
+  // urlMap: broken ones pre-fill with existing URL so user can replace
+  const [urlMap, setUrlMap] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const m: Record<string, string> = {};
+    noImageWords.forEach(w => { if (!(w.id in m)) m[w.id] = ""; });
+    words.filter(w => brokenIds.has(w.id)).forEach(w => { m[w.id] = w.imageUrl ?? ""; });
+    setUrlMap(prev => ({ ...m, ...prev }));
+  }, [noImageWords, brokenIds, words]);
+
+  const [previewFailed, setPreviewFailed] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [done, setDone] = useState(false);
+
+  const filledCount = Object.values(urlMap).filter(v => v.trim().length > 0).length;
+
+  const handleSave = async () => {
+    const entries = Object.entries(urlMap).filter(([, url]) => url.trim().length > 0);
+    if (entries.length === 0) return;
+    setSaving(true);
+    setProgress(0);
+    const updates: { id: string; imageUrl: string }[] = [];
+    for (let i = 0; i < entries.length; i++) {
+      const [id, imageUrl] = entries[i];
+      await updateWord(id, { imageUrl: imageUrl.trim() });
+      updates.push({ id, imageUrl: imageUrl.trim() });
+      setProgress(Math.round(((i + 1) / entries.length) * 100));
+    }
+    setSaving(false);
+    setDone(true);
+    onUpdated(updates);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+
+      <motion.div initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        style={{ width: "100%", maxWidth: 680, maxHeight: "90dvh", display: "flex", flexDirection: "column",
+          background: "#0E0E1A", border: "1px solid rgba(45,212,191,0.25)",
+          borderRadius: "var(--r-xl)", overflow: "hidden" }}>
+
+        {/* Header */}
+        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(45,212,191,0.15)", border: "1px solid rgba(45,212,191,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ImageIcon size={20} color="#2DD4BF" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-1)" }}>Xử lí Thêm Ảnh Hàng loạt</div>
+            <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>
+              {scanning
+                ? <span>Đang quét ảnh lỗi... <span style={{ color: "#F59E0B", fontWeight: 700 }}>{scanProgress}%</span></span>
+                : <><span style={{ color: "#FB7185", fontWeight: 700 }}>{noImageWords.length} từ</span> chưa có ảnh · <span style={{ color: "#F59E0B", fontWeight: 700 }}>{brokenIds.size} ảnh lỗi</span> · Tổng: <span style={{ color: "#2DD4BF", fontWeight: 700 }}>{fixWords.length}</span> từ cần xử lí</>}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "var(--text-4)" }}><X size={20} /></button>
+        </div>
+
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "14px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+
+          {/* Scanning state */}
+          {scanning && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "32px 0" }}>
+              <div style={{ width: 52, height: 52, borderRadius: "50%", border: "3px solid rgba(45,212,191,0.15)", borderTop: "3px solid #2DD4BF", animation: "spin 1s linear infinite" }} />
+              <div style={{ fontWeight: 700, color: "var(--text-2)", fontSize: 14 }}>Đang quét ảnh bị lỗi...</div>
+              <div style={{ fontSize: 12, color: "var(--text-4)" }}>Kiểm tra {hasImageWords.length} ảnh · {scanProgress}% hoàn thành</div>
+              <div style={{ width: "100%", maxWidth: 320, height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" }}>
+                <motion.div animate={{ width: `${scanProgress}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#2DD4BF,#38BDF8)", borderRadius: 99 }} />
+              </div>
+            </div>
+          )}
+
+          {!scanning && fixWords.length === 0 ? (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "48px 0", textAlign: "center" }}>
+              <div style={{ fontSize: 48 }}>🖼️</div>
+              <div style={{ fontWeight: 800, fontSize: 18, color: "var(--text-1)" }}>Tất cả ảnh đều ổn!</div>
+              <div style={{ fontSize: 13, color: "var(--text-3)" }}>Không phát hiện ảnh lỗi hay từ thiếu ảnh.</div>
+            </div>
+          ) : !scanning && (
+            <>
+              <div style={{ padding: "10px 14px", borderRadius: "var(--r-md)", background: "rgba(45,212,191,0.07)", border: "1px solid rgba(45,212,191,0.2)", fontSize: 12, color: "#2DD4BF", lineHeight: 1.6 }}>
+                💡 Dán link ảnh mới vào ô tương ứng. Ảnh lỗi đã điền sẵn URL cũ để bạn thay thế. Để trống = bỏ qua.
+              </div>
+
+              {fixWords.map((w) => {
+                const isBroken = brokenIds.has(w.id);
+                const url = urlMap[w.id] ?? "";
+                const hasUrl = url.trim().length > 0;
+                const failed = previewFailed[w.id];
+                const previewSrc = url.trim() || (isBroken ? w.imageUrl : null);
+                return (
+                  <div key={w.id} style={{
+                    borderRadius: "var(--r-md)", border: "1px solid",
+                    borderColor: hasUrl && !failed ? "rgba(45,212,191,0.35)" : failed ? "rgba(251,113,133,0.35)" : isBroken ? "rgba(245,158,11,0.35)" : "var(--border)",
+                    background: hasUrl && !failed ? "rgba(45,212,191,0.05)" : isBroken ? "rgba(245,158,11,0.04)" : "var(--bg-raised)",
+                    padding: "12px 14px", transition: "all 0.2s",
+                    display: "flex", alignItems: "center", gap: 12,
+                  }}>
+                    {/* Thumbnail — position:relative bắt buộc để badge absolute không bay ra ngoài */}
+                    <div style={{
+                      width: 48, height: 48, borderRadius: 9, flexShrink: 0,
+                      background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      overflow: "hidden", position: "relative",
+                    }}>
+                      {previewSrc && !failed ? (
+                        <img
+                          src={previewSrc}
+                          alt={w.word}
+                          onError={() => setPreviewFailed(p => ({ ...p, [w.id]: true }))}
+                          onLoad={() => setPreviewFailed(p => { const next = { ...p }; delete next[w.id]; return next; })}
+                          style={{ width: "100%", height: "100%", objectFit: "cover",
+                            filter: isBroken && !hasUrl ? "grayscale(0.6) opacity(0.4)" : "none" }}
+                        />
+                      ) : failed ? (
+                        <AlertCircle size={20} color="#FB7185" />
+                      ) : (
+                        <ImageIcon size={20} color="var(--text-4)" />
+                      )}
+                      {isBroken && (
+                        <div style={{ position: "absolute", bottom: 2, right: 2,
+                          background: "#F59E0B", borderRadius: 3, padding: "0px 3px",
+                          fontSize: 7, fontWeight: 900, color: "#1A0F00", lineHeight: "14px" }}>
+                          LỖI
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Word name + meaning (fixed width) */}
+                    <div style={{ width: 130, flexShrink: 0 }}>
+                      <div style={{ fontWeight: 800, fontSize: 13, color: "var(--text-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {w.word}
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {w.meaning}
+                      </div>
+                      {isBroken
+                        ? <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 99, background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.25)", display: "inline-block", marginTop: 3 }}>⚠ Ảnh lỗi</span>
+                        : <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 99, background: "rgba(148,163,184,0.1)", color: "var(--text-4)", border: "1px solid rgba(148,163,184,0.15)", display: "inline-block", marginTop: 3 }}>Chưa có ảnh</span>}
+                    </div>
+
+                    {/* URL input — flex:1 chiếm phần còn lại */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <input
+                        type="text"
+                        value={url}
+                        onChange={(e) => {
+                          setUrlMap(prev => ({ ...prev, [w.id]: e.target.value }));
+                          if (previewFailed[w.id]) setPreviewFailed(p => { const next = { ...p }; delete next[w.id]; return next; });
+                        }}
+                        placeholder={isBroken ? "Dán URL ảnh mới..." : "Dán địa chỉ ảnh..."}
+                        className="input"
+                        style={{
+                          width: "100%", fontSize: 12, padding: "7px 11px",
+                          borderRadius: "var(--r-sm)", boxSizing: "border-box",
+                          borderColor: failed ? "rgba(251,113,133,0.5)"
+                            : hasUrl && !failed ? "rgba(45,212,191,0.5)"
+                            : isBroken ? "rgba(245,158,11,0.35)" : undefined,
+                        }}
+                      />
+                      {failed && <div style={{ fontSize: 10, color: "#FB7185", marginTop: 3 }}>⚠ Link không hợp lệ</div>}
+                    </div>
+
+                    {/* Status icon */}
+                    <div style={{ flexShrink: 0 }}>
+                      {hasUrl && !failed && <CheckCircle2 size={16} color="#2DD4BF" />}
+                      {failed && <AlertCircle size={16} color="#FB7185" />}
+                      {!hasUrl && !failed && <div style={{ width: 16 }} />}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Progress */}
+          {saving && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+              <div style={{ height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" }}>
+                <motion.div animate={{ width: `${progress}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#2DD4BF,#38BDF8)", borderRadius: 99 }} />
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", textAlign: "center" }}>Đang lưu... {progress}%</div>
+            </div>
+          )}
+
+          {done && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              style={{ padding: "14px", borderRadius: "var(--r-md)", background: "rgba(45,212,191,0.1)", border: "1px solid rgba(45,212,191,0.3)", textAlign: "center" }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>🖼️</div>
+              <div style={{ fontWeight: 700, color: "#2DD4BF", fontSize: 14 }}>Đã thêm ảnh cho {filledCount} từ vựng!</div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>Ảnh sẽ hiển thị ngay trong thẻ Flashcard</div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)", display: "flex", gap: 10, alignItems: "center", flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: "var(--text-4)", flex: 1 }}>
+            {filledCount > 0 ? <span style={{ color: "#2DD4BF", fontWeight: 600 }}>{filledCount} ảnh sẵn sàng lưu</span> : "Chưa có ảnh nào được dán"}
+          </span>
+          <button onClick={onClose} className="btn btn-secondary" style={{ padding: "10px 20px" }}>{done ? "Đóng" : "Hủy"}</button>
+          {!done && !scanning && fixWords.length > 0 && (
+            <button onClick={handleSave} disabled={filledCount === 0 || saving} className="btn btn-primary"
+              style={{ padding: "10px 24px",
+                background: filledCount > 0 ? "linear-gradient(135deg,#2DD4BF,#38BDF8)" : undefined,
+                color: filledCount > 0 ? "#071E20" : undefined,
+                opacity: filledCount === 0 ? 0.5 : 1 }}>
+              {saving ? `Đang lưu ${progress}%...` : `✓ Xác nhận thêm ${filledCount} ảnh`}
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 /* ── Main Page ── */
 export default function VocabularyPage() {
   const [words, setWords]         = useState<Word[]>([]);
@@ -895,10 +1152,18 @@ export default function VocabularyPage() {
   const [showAdd, setShowAdd]     = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showCleanup, setShowCleanup] = useState(false);
+  const [showImageFix, setShowImageFix] = useState(false);
+  const [showFixMenu, setShowFixMenu] = useState(false);
   const [selected, setSelected]   = useState<Word|null>(null);
   const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => { getWords().then(setWords); }, []);
+  useEffect(() => {
+    if (!showFixMenu) return;
+    const close = () => setShowFixMenu(false);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [showFixMenu]);
 
   const list = useMemo(() => {
     let w = [...words];
@@ -947,10 +1212,72 @@ export default function VocabularyPage() {
             · {words.filter(w=>w.imageUrl).length} từ có ảnh
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => setShowCleanup(true)} className="btn btn-secondary" style={{ padding: "10px 16px", border: "1.5px solid rgba(251,113,133,0.35)", color: "#FB7185", background: "rgba(251,113,133,0.07)" }}>
-            <Wrench size={16} /> Sửa lỗi
-          </button>
+        <div style={{ display: "flex", gap: 8, position: "relative" }}>
+          {/* Sửa lỗi dropdown */}
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setShowFixMenu(m => !m)}
+              className="btn btn-secondary"
+              style={{ padding: "10px 16px", border: "1.5px solid rgba(251,113,133,0.35)", color: "#FB7185", background: "rgba(251,113,133,0.07)", gap: 6 }}
+            >
+              <Wrench size={16} /> Sửa lỗi <ChevDown size={13} style={{ opacity: 0.7, transform: showFixMenu ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+            </button>
+
+            <AnimatePresence>
+              {showFixMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  style={{
+                    position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 100,
+                    background: "#131320", border: "1px solid rgba(251,113,133,0.25)",
+                    borderRadius: "var(--r-md)", overflow: "hidden", minWidth: 230,
+                    boxShadow: "0 16px 40px rgba(0,0,0,0.6)"
+                  }}
+                >
+                  <button
+                    onClick={() => { setShowCleanup(true); setShowFixMenu(false); }}
+                    style={{
+                      width: "100%", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10,
+                      background: "none", border: "none", cursor: "pointer", textAlign: "left",
+                      borderBottom: "1px solid rgba(255,255,255,0.06)", WebkitTapHighlightColor: "transparent"
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(251,113,133,0.08)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(251,113,133,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Copy size={15} color="#FB7185" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-1)" }}>Xử lý từ trùng lặp</div>
+                      <div style={{ fontSize: 11, color: "var(--text-4)", marginTop: 1 }}>Tìm & xóa bản sao, giữ lại 1 từ</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => { setShowImageFix(true); setShowFixMenu(false); }}
+                    style={{
+                      width: "100%", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10,
+                      background: "none", border: "none", cursor: "pointer", textAlign: "left",
+                      WebkitTapHighlightColor: "transparent"
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(45,212,191,0.08)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(45,212,191,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <ImageIcon size={15} color="#2DD4BF" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-1)" }}>Xử lý thêm ảnh</div>
+                      <div style={{ fontSize: 11, color: "var(--text-4)", marginTop: 1 }}>Dán URL ảnh hàng loạt cho từ chưa có ảnh</div>
+                    </div>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           <button onClick={() => setShowImport(true)} className="btn btn-secondary" style={{ padding: "10px 16px", border: "1.5px solid rgba(74,222,128,0.35)", color: "#4ADE80", background: "rgba(74,222,128,0.07)" }}>
             <FileSpreadsheet size={16} /> Nhập Excel
           </button>
@@ -1140,6 +1467,19 @@ export default function VocabularyPage() {
             onClose={() => setShowCleanup(false)}
             onCleaned={(deletedIds) => {
               setWords(prev => prev.filter(w => !deletedIds.includes(w.id)));
+            }}
+          />
+        )}
+        {showImageFix && (
+          <ImageFixModal
+            words={words}
+            onClose={() => setShowImageFix(false)}
+            onUpdated={(updates) => {
+              setWords(prev => prev.map(w => {
+                const upd = updates.find(u => u.id === w.id);
+                return upd ? { ...w, imageUrl: upd.imageUrl } : w;
+              }));
+              setTimeout(() => setShowImageFix(false), 2500);
             }}
           />
         )}
