@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useMemo, useRef, CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon, Lightbulb, FileSpreadsheet, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon, Lightbulb, FileSpreadsheet, Upload, AlertCircle, CheckCircle2, Wrench, Copy } from "lucide-react";
 import { getWords, addWord, deleteWord, updateWord } from "@/lib/db";
 import { Word, TopicTag, TOPIC_TAGS, TOPIC_EMOJI, suggestTopic } from "@/lib/types";
 import * as XLSX from "xlsx";
@@ -651,6 +651,240 @@ function ExcelImportModal({ onClose, onImported }: { onClose: () => void; onImpo
   );
 }
 
+/* ── Duplicate Cleanup Modal ── */
+function DuplicateCleanupModal({ words, onClose, onCleaned }: {
+  words: Word[];
+  onClose: () => void;
+  onCleaned: (deletedIds: string[]) => void;
+}) {
+  // Group words by normalized word string (lowercase, trimmed)
+  const groups = useMemo(() => {
+    const map = new Map<string, Word[]>();
+    words.forEach(w => {
+      const key = w.word.toLowerCase().trim();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(w);
+    });
+    // Only keep groups with duplicates
+    const dupes: { key: string; items: Word[] }[] = [];
+    map.forEach((items, key) => {
+      if (items.length > 1) {
+        // Sort: keep the one with the most data (highest difficulty or most reviews) as "keeper"
+        const sorted = [...items].sort((a, b) => {
+          const scoreA = a.difficulty * 10 + a.reviewCount + (a.imageUrl ? 5 : 0) + (a.example ? 3 : 0);
+          const scoreB = b.difficulty * 10 + b.reviewCount + (b.imageUrl ? 5 : 0) + (b.example ? 3 : 0);
+          return scoreB - scoreA;
+        });
+        dupes.push({ key, items: sorted });
+      }
+    });
+    return dupes.sort((a, b) => a.key.localeCompare(b.key));
+  }, [words]);
+
+  const [selectedToDelete, setSelectedToDelete] = useState<Set<string>>(() => {
+    // Auto-select all duplicates (all except the first/best in each group)
+    const ids = new Set<string>();
+    const map = new Map<string, Word[]>();
+    words.forEach(w => {
+      const key = w.word.toLowerCase().trim();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(w);
+    });
+    map.forEach(items => {
+      if (items.length > 1) {
+        const sorted = [...items].sort((a, b) => {
+          const scoreA = a.difficulty * 10 + a.reviewCount + (a.imageUrl ? 5 : 0) + (a.example ? 3 : 0);
+          const scoreB = b.difficulty * 10 + b.reviewCount + (b.imageUrl ? 5 : 0) + (b.example ? 3 : 0);
+          return scoreB - scoreA;
+        });
+        sorted.slice(1).forEach(w => ids.add(w.id));
+      }
+    });
+    return ids;
+  });
+
+  const [deleting, setDeleting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [done, setDone] = useState(false);
+
+  const toggleId = (id: string) => {
+    setSelectedToDelete(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDelete = async () => {
+    const ids = Array.from(selectedToDelete);
+    if (ids.length === 0) return;
+    setDeleting(true);
+    setProgress(0);
+    for (let i = 0; i < ids.length; i++) {
+      await deleteWord(ids[i]);
+      setProgress(Math.round(((i + 1) / ids.length) * 100));
+    }
+    setDeleting(false);
+    setDone(true);
+    onCleaned(ids);
+  };
+
+  const totalDupeCount = groups.reduce((s, g) => s + g.items.length - 1, 0);
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+
+      <motion.div initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        style={{ width: "100%", maxWidth: 700, maxHeight: "90dvh", display: "flex", flexDirection: "column",
+          background: "#0E0E1A", border: "1px solid rgba(251,113,133,0.25)",
+          borderRadius: "var(--r-xl)", overflow: "hidden" }}>
+
+        {/* Header */}
+        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(251,113,133,0.15)", border: "1px solid rgba(251,113,133,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Wrench size={20} color="#FB7185" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-1)" }}>Dọn dẹp từ vựng trùng lặp</div>
+            <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>
+              {groups.length > 0
+                ? <><span style={{ color: "#FB7185", fontWeight: 700 }}>{groups.length} từ</span> bị trùng · <span style={{ color: "#FB7185", fontWeight: 700 }}>{totalDupeCount} bản sao</span> sẽ được xóa</>
+                : "Không phát hiện từ vựng trùng lặp"}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "var(--text-4)" }}><X size={20} /></button>
+        </div>
+
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+
+          {groups.length === 0 ? (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "48px 0", textAlign: "center" }}>
+              <div style={{ fontSize: 48 }}>✨</div>
+              <div style={{ fontWeight: 800, fontSize: 18, color: "var(--text-1)" }}>Kho từ vựng sạch sẽ!</div>
+              <div style={{ fontSize: 13, color: "var(--text-3)" }}>Không tìm thấy từ vựng nào bị trùng lặp.</div>
+            </div>
+          ) : (
+            <>
+              {/* Legend */}
+              <div style={{ padding: "10px 14px", borderRadius: "var(--r-md)", background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.2)", fontSize: 12, color: "#F59E0B", lineHeight: 1.6 }}>
+                💡 Hệ thống tự động chọn bản sao tốt nhất (có nhiều dữ liệu nhất) để <strong>giữ lại</strong>. Các bản còn lại được <strong>đánh dấu xóa</strong>. Bạn có thể điều chỉnh trước khi xóa.
+              </div>
+
+              {/* Bulk select */}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => {
+                  const allDupeIds = new Set<string>();
+                  groups.forEach(g => g.items.slice(1).forEach(w => allDupeIds.add(w.id)));
+                  setSelectedToDelete(allDupeIds);
+                }} className="btn btn-secondary" style={{ fontSize: 11, padding: "5px 12px" }}>Chọn tất cả bản sao</button>
+                <button onClick={() => setSelectedToDelete(new Set())} className="btn btn-secondary" style={{ fontSize: 11, padding: "5px 12px" }}>Bỏ chọn tất cả</button>
+                <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-3)", display: "flex", alignItems: "center" }}>
+                  Đã chọn xóa: <strong style={{ color: "#FB7185", marginLeft: 4 }}>{selectedToDelete.size} từ</strong>
+                </span>
+              </div>
+
+              {/* Duplicate groups */}
+              {groups.map((g, gi) => (
+                <div key={g.key} style={{ borderRadius: "var(--r-md)", border: "1px solid var(--border)", overflow: "hidden" }}>
+                  {/* Group header */}
+                  <div style={{ padding: "10px 14px", background: "rgba(251,113,133,0.06)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8 }}>
+                    <Copy size={13} color="#FB7185" />
+                    <span style={{ fontWeight: 800, fontSize: 13, color: "var(--text-1)" }}>{g.items[0].word}</span>
+                    <span style={{ fontSize: 11, color: "#FB7185", background: "rgba(251,113,133,0.15)", padding: "2px 7px", borderRadius: 99 }}>{g.items.length} bản</span>
+                  </div>
+
+                  {/* Each copy */}
+                  {g.items.map((w, wi) => {
+                    const isKeeper = wi === 0;
+                    const isChecked = selectedToDelete.has(w.id);
+                    return (
+                      <div key={w.id} style={{
+                        padding: "10px 14px", display: "flex", alignItems: "flex-start", gap: 12,
+                        background: isKeeper ? "rgba(74,222,128,0.04)" : isChecked ? "rgba(251,113,133,0.05)" : "transparent",
+                        borderBottom: wi < g.items.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                      }}>
+                        {/* Checkbox or keeper badge */}
+                        {isKeeper ? (
+                          <div style={{ width: 20, height: 20, borderRadius: 6, background: "rgba(74,222,128,0.2)", border: "1px solid rgba(74,222,128,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                            <Check size={12} color="#4ADE80" />
+                          </div>
+                        ) : (
+                          <input type="checkbox" checked={isChecked} onChange={() => toggleId(w.id)}
+                            style={{ width: 16, height: 16, marginTop: 4, flexShrink: 0, accentColor: "#FB7185", cursor: "pointer" }} />
+                        )}
+
+                        {/* Word info */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                            {isKeeper && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 99, background: "rgba(74,222,128,0.15)", color: "#4ADE80", border: "1px solid rgba(74,222,128,0.3)" }}>✓ GIỮ LẠI</span>}
+                            {!isKeeper && isChecked && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 99, background: "rgba(251,113,133,0.15)", color: "#FB7185", border: "1px solid rgba(251,113,133,0.3)" }}>✗ XÓA</span>}
+                            {!isKeeper && !isChecked && <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "var(--text-4)" }}>BỎ CHỌN</span>}
+                            <span style={{ fontSize: 11, color: "var(--text-4)", fontFamily: "monospace" }}>{w.phonetics}</span>
+                          </div>
+                          <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 3 }}>{w.meaning}</div>
+                          {w.example && <div style={{ fontSize: 11, color: "var(--text-4)", fontStyle: "italic", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{w.example}"</div>}
+                          <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 10, color: "var(--text-4)" }}>Chủ đề: {w.topic}</span>
+                            <span style={{ fontSize: 10, color: "var(--text-4)" }}>Độ thuộc: {w.difficulty}/5</span>
+                            <span style={{ fontSize: 10, color: "var(--text-4)" }}>Ôn {w.reviewCount} lần</span>
+                            <span style={{ fontSize: 10, color: "var(--text-4)" }}>Thêm: {new Date(w.createdAt).toLocaleDateString("vi-VN")}</span>
+                            {w.imageUrl && <span style={{ fontSize: 10, color: "#2DD4BF" }}>🖼 Có ảnh</span>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* Progress */}
+          {deleting && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" }}>
+                <motion.div animate={{ width: `${progress}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#FB7185,#F472B6)", borderRadius: 99 }} />
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", textAlign: "center" }}>Đang xóa... {progress}%</div>
+            </div>
+          )}
+
+          {done && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              style={{ padding: "14px", borderRadius: "var(--r-md)", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", textAlign: "center" }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>🧹</div>
+              <div style={{ fontWeight: 700, color: "#4ADE80", fontSize: 14 }}>Đã dọn sạch {selectedToDelete.size} từ trùng lặp!</div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>Kho từ vựng đã được cập nhật</div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)", display: "flex", gap: 10, flexShrink: 0 }}>
+          <button onClick={onClose} className="btn btn-secondary" style={{ flex: 1, padding: "11px" }}>
+            {done ? "Đóng" : "Hủy"}
+          </button>
+          {!done && groups.length > 0 && (
+            <button onClick={handleDelete} disabled={selectedToDelete.size === 0 || deleting} className="btn"
+              style={{
+                flex: 2, padding: "11px", fontWeight: 700, fontSize: 14,
+                background: selectedToDelete.size > 0 ? "linear-gradient(135deg,#FB7185,#F43F5E)" : "var(--bg-overlay)",
+                color: selectedToDelete.size > 0 ? "white" : "var(--text-4)",
+                border: "none", borderRadius: "var(--r-md)", cursor: selectedToDelete.size > 0 ? "pointer" : "not-allowed"
+              }}>
+              {deleting ? `Đang xóa ${progress}%...` : `🗑 Xóa ${selectedToDelete.size} từ trùng lặp`}
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 /* ── Main Page ── */
 export default function VocabularyPage() {
   const [words, setWords]         = useState<Word[]>([]);
@@ -660,6 +894,7 @@ export default function VocabularyPage() {
   const [asc, setAsc]             = useState(false);
   const [showAdd, setShowAdd]     = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showCleanup, setShowCleanup] = useState(false);
   const [selected, setSelected]   = useState<Word|null>(null);
   const [showFilter, setShowFilter] = useState(false);
 
@@ -713,6 +948,9 @@ export default function VocabularyPage() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setShowCleanup(true)} className="btn btn-secondary" style={{ padding: "10px 16px", border: "1.5px solid rgba(251,113,133,0.35)", color: "#FB7185", background: "rgba(251,113,133,0.07)" }}>
+            <Wrench size={16} /> Sửa lỗi
+          </button>
           <button onClick={() => setShowImport(true)} className="btn btn-secondary" style={{ padding: "10px 16px", border: "1.5px solid rgba(74,222,128,0.35)", color: "#4ADE80", background: "rgba(74,222,128,0.07)" }}>
             <FileSpreadsheet size={16} /> Nhập Excel
           </button>
@@ -893,6 +1131,15 @@ export default function VocabularyPage() {
             onImported={(count) => {
               getWords().then(setWords);
               if (count > 0) setTimeout(() => setShowImport(false), 2500);
+            }}
+          />
+        )}
+        {showCleanup && (
+          <DuplicateCleanupModal
+            words={words}
+            onClose={() => setShowCleanup(false)}
+            onCleaned={(deletedIds) => {
+              setWords(prev => prev.filter(w => !deletedIds.includes(w.id)));
             }}
           />
         )}
