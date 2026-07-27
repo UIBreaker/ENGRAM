@@ -87,7 +87,7 @@ function CardBack({ word }: { word: Word }) {
     }}>
       {showImage && (
         <div style={{ position: "relative", height: 160, flexShrink: 0, overflow: "hidden" }}>
-          <img src={imgSrc} alt={word.word} onError={() => setImgFailed(true)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <img src={imgSrc} alt={word.word} referrerPolicy="no-referrer" onError={() => setImgFailed(true)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 60, background: "linear-gradient(to bottom, transparent, #140F2E)" }} />
         </div>
       )}

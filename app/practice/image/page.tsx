@@ -147,7 +147,7 @@ export default function ImageMatchPage() {
               </div>
             )}
             {!imgErr && (
-              <img src={q.imgSrc} alt="?" onLoad={() => setImgLoad(true)} onError={() => { setImgErr(true); setImgLoad(true); }}
+              <img src={q.imgSrc} alt="?" referrerPolicy="no-referrer" onLoad={() => setImgLoad(true)} onError={() => { setImgErr(true); setImgLoad(true); }}
                 style={{ width: "100%", height: 220, objectFit: "cover", display: imgLoaded ? "block" : "none" }} />
             )}
             {imgErr && (

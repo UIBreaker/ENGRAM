@@ -103,6 +103,7 @@ function WordImage({ word, imageUrl, size = 200 }: { word: string; imageUrl?: st
       )}
       {src && (
         <img src={src} alt={word}
+          referrerPolicy="no-referrer"
           onLoad={() => setLoading(false)}
           onError={() => { setFailed(true); setLoading(false); }}
           style={{ width:"100%", height:"100%", objectFit:"cover",
@@ -885,6 +886,295 @@ function DuplicateCleanupModal({ words, onClose, onCleaned }: {
   );
 }
 
+/* ── Auto Image Modal (Wikimedia Commons) ── */
+type ImageCandidate = { wordId: string; word: string; meaning: string; imageUrl: string; thumbUrl: string; selected: boolean; status: "pending"|"found"|"notfound"|"saving"|"saved" };
+
+async function fetchWikimediaImage(word: string): Promise<{ imageUrl: string; thumbUrl: string } | null> {
+  // Try Wikipedia Pageimages first (most reliable for common words)
+  try {
+    const wpRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(word)}&prop=pageimages&format=json&pithumbsize=400&origin=*`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    const wpData = await wpRes.json();
+    const pages = wpData?.query?.pages;
+    if (pages) {
+      const page = Object.values(pages)[0] as { thumbnail?: { source: string } };
+      if (page?.thumbnail?.source) {
+        const thumb = page.thumbnail.source;
+        const full = thumb.replace(/\/\d+px-/, "/800px-");
+        return { imageUrl: full, thumbUrl: thumb };
+      }
+    }
+  } catch {/* ignore */}
+
+  // Fallback: Wikimedia Commons search
+  try {
+    const cmRes = await fetch(
+      `https://commons.wikimedia.org/w/api.php?action=query&list=search&srnamespace=6&srsearch=${encodeURIComponent(word)}&srlimit=5&srinfo=&srprop=snippet&format=json&origin=*`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    const cmData = await cmRes.json();
+    const hits: { title: string }[] = cmData?.query?.search ?? [];
+    for (const hit of hits) {
+      const title = hit.title.replace(/^File:/, "");
+      const ext = title.split(".").pop()?.toLowerCase();
+      if (!["jpg", "jpeg", "png", "webp", "gif"].includes(ext ?? "")) continue;
+      const infoRes = await fetch(
+        `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(hit.title)}&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=400&format=json&origin=*`,
+        { signal: AbortSignal.timeout(8000) }
+      );
+      const infoData = await infoRes.json();
+      const infoPages = infoData?.query?.pages;
+      if (infoPages) {
+        const p = Object.values(infoPages)[0] as { imageinfo?: { url: string; thumburl: string }[] };
+        if (p?.imageinfo?.[0]) {
+          return { imageUrl: p.imageinfo[0].url, thumbUrl: p.imageinfo[0].thumburl };
+        }
+      }
+      break;
+    }
+  } catch {/* ignore */}
+
+  return null;
+}
+
+function AutoImageModal({ words, onClose, onUpdated }: {
+  words: Word[];
+  onClose: () => void;
+  onUpdated: (updates: { id: string; imageUrl: string }[]) => void;
+}) {
+  const noImageWords = useMemo(() => words.filter(w => !w.imageUrl), [words]);
+  const [candidates, setCandidates] = useState<ImageCandidate[]>([]);
+  const [fetching, setFetching] = useState(false);
+  const [fetchProgress, setFetchProgress] = useState(0);
+  const [currentWord, setCurrentWord] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveProgress, setSaveProgress] = useState(0);
+  const [done, setDone] = useState(false);
+  const cancelRef = useRef(false);
+
+  const selectedCount = candidates.filter(c => c.selected && c.status === "found").length;
+  const foundCount = candidates.filter(c => c.status === "found").length;
+
+  const handleFetch = async () => {
+    if (noImageWords.length === 0) return;
+    setFetching(true);
+    cancelRef.current = false;
+    setCandidates(noImageWords.map(w => ({ wordId: w.id, word: w.word, meaning: w.meaning, imageUrl: "", thumbUrl: "", selected: false, status: "pending" })));
+    for (let i = 0; i < noImageWords.length; i++) {
+      if (cancelRef.current) break;
+      const w = noImageWords[i];
+      setCurrentWord(w.word);
+      setFetchProgress(Math.round((i / noImageWords.length) * 100));
+      const result = await fetchWikimediaImage(w.word);
+      setCandidates(prev => prev.map(c => c.wordId === w.id
+        ? { ...c, imageUrl: result?.imageUrl ?? "", thumbUrl: result?.thumbUrl ?? "", status: result ? "found" : "notfound", selected: !!result }
+        : c
+      ));
+    }
+    setFetchProgress(100);
+    setCurrentWord("");
+    setFetching(false);
+  };
+
+  const handleSave = async () => {
+    const toSave = candidates.filter(c => c.selected && c.status === "found");
+    if (toSave.length === 0) return;
+    setSaving(true);
+    setSaveProgress(0);
+    const updates: { id: string; imageUrl: string }[] = [];
+    for (let i = 0; i < toSave.length; i++) {
+      await updateWord(toSave[i].wordId, { imageUrl: toSave[i].imageUrl });
+      updates.push({ id: toSave[i].wordId, imageUrl: toSave[i].imageUrl });
+      setCandidates(prev => prev.map(c => c.wordId === toSave[i].wordId ? { ...c, status: "saved" } : c));
+      setSaveProgress(Math.round(((i + 1) / toSave.length) * 100));
+    }
+    setSaving(false);
+    setDone(true);
+    onUpdated(updates);
+  };
+
+  const toggleSelect = (wordId: string) =>
+    setCandidates(prev => prev.map(c => c.wordId === wordId ? { ...c, selected: !c.selected } : c));
+  const selectAll = () => setCandidates(prev => prev.map(c => c.status === "found" ? { ...c, selected: true } : c));
+  const deselectAll = () => setCandidates(prev => prev.map(c => ({ ...c, selected: false })));
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.78)", backdropFilter: "blur(8px)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+
+      <motion.div initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        style={{ width: "100%", maxWidth: 720, maxHeight: "90dvh", display: "flex", flexDirection: "column",
+          background: "#0E0E1A", border: "1px solid rgba(123,104,238,0.3)",
+          borderRadius: "var(--r-xl)", overflow: "hidden" }}>
+
+        {/* Header */}
+        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(123,104,238,0.15)", border: "1px solid rgba(123,104,238,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Sparkles size={20} color="#9B8FF5" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-1)" }}>Tự động Thêm Ảnh bằng Wikimedia</div>
+            <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>
+              {!fetching && candidates.length === 0
+                ? <><span style={{ color: "#9B8FF5", fontWeight: 700 }}>{noImageWords.length} từ</span> chưa có ảnh · Bấm Bắt đầu để tìm tự động</>  
+                : fetching
+                ? <><span style={{ color: "#F59E0B", fontWeight: 700 }}>Đang tìm...</span> {currentWord && <span>· {currentWord}</span>} · {fetchProgress}%</>
+                : <><span style={{ color: "#4ADE80", fontWeight: 700 }}>{foundCount} ảnh tìm thấy</span> · <span style={{ color: "#9B8FF5", fontWeight: 700 }}>{selectedCount} được chọn</span> · {candidates.filter(c => c.status === "notfound").length} không tìm thấy</>}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 6, color: "var(--text-4)" }}><X size={20} /></button>
+        </div>
+
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "14px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+
+          {/* Initial state — no fetch yet */}
+          {!fetching && candidates.length === 0 && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "32px 0" }}>
+              <div style={{ fontSize: 52 }}>🔍</div>
+              <div style={{ textAlign: "center", maxWidth: 400 }}>
+                <div style={{ fontWeight: 800, fontSize: 17, color: "var(--text-1)", marginBottom: 8 }}>Tìm ảnh tự động từ Wikimedia</div>
+                <div style={{ fontSize: 13, color: "var(--text-3)", lineHeight: 1.7 }}>
+                  Hệ thống sẽ tìm kiếm ảnh cho <strong style={{ color: "#9B8FF5" }}>{noImageWords.length} từ</strong> chưa có ảnh qua <strong>Wikipedia</strong> và <strong>Wikimedia Commons</strong>. Bạn có thể xem trước và chọn/bỏ từng ảnh trước khi lưu.
+                </div>
+              </div>
+              {noImageWords.length === 0
+                ? <div style={{ padding: "12px 20px", borderRadius: "var(--r-md)", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)", fontSize: 13, color: "#4ADE80" }}>✨ Tất cả từ đều đã có ảnh!</div>
+                : <button onClick={handleFetch} className="btn btn-primary" style={{ padding: "12px 32px", fontSize: 14, background: "linear-gradient(135deg,#7B68EE,#9B8FF5)" }}>
+                    <Sparkles size={16} /> Bắt đầu tìm ảnh tự động
+                  </button>
+              }
+            </div>
+          )}
+
+          {/* Fetching progress */}
+          {fetching && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ padding: "14px", borderRadius: "var(--r-md)", background: "rgba(123,104,238,0.07)", border: "1px solid rgba(123,104,238,0.2)", display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid rgba(123,104,238,0.2)", borderTop: "3px solid #9B8FF5", animation: "spin 1s linear infinite", flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", marginBottom: 4 }}>
+                    Đang tìm: <span style={{ color: "#9B8FF5" }}>{currentWord}</span>
+                  </div>
+                  <div style={{ height: 5, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" }}>
+                    <motion.div animate={{ width: `${fetchProgress}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#7B68EE,#9B8FF5)", borderRadius: 99 }} />
+                  </div>
+                </div>
+                <span style={{ fontSize: 12, color: "var(--text-4)", flexShrink: 0 }}>{fetchProgress}%</span>
+              </div>
+            </div>
+          )}
+
+          {/* Results grid */}
+          {candidates.length > 0 && (
+            <>
+              {/* Toolbar */}
+              {!fetching && foundCount > 0 && (
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <button onClick={selectAll} className="btn btn-secondary" style={{ padding: "6px 12px", fontSize: 12 }}>✓ Chọn tất cả ({foundCount})</button>
+                  <button onClick={deselectAll} className="btn btn-secondary" style={{ padding: "6px 12px", fontSize: 12 }}>✗ Bỏ chọn</button>
+                  <div style={{ flex: 1 }} />
+                  <span style={{ fontSize: 12, color: "var(--text-4)" }}>Đã chọn: <span style={{ color: "#9B8FF5", fontWeight: 700 }}>{selectedCount}</span>/{foundCount}</span>
+                </div>
+              )}
+
+              {/* Card grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+                {candidates.map(c => (
+                  <div key={c.wordId}
+                    onClick={() => c.status === "found" && toggleSelect(c.wordId)}
+                    style={{
+                      borderRadius: "var(--r-md)", border: "1.5px solid",
+                      borderColor: c.status === "saved" ? "rgba(74,222,128,0.4)"
+                        : c.selected && c.status === "found" ? "rgba(123,104,238,0.5)"
+                        : c.status === "notfound" ? "rgba(255,255,255,0.05)"
+                        : "var(--border)",
+                      background: c.status === "saved" ? "rgba(74,222,128,0.05)"
+                        : c.selected ? "rgba(123,104,238,0.07)" : "var(--bg-raised)",
+                      overflow: "hidden", cursor: c.status === "found" ? "pointer" : "default",
+                      transition: "all 0.15s", opacity: c.status === "pending" ? 0.5 : 1,
+                    }}>
+                    {/* Image area */}
+                    <div style={{ height: 130, background: "rgba(255,255,255,0.03)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {c.status === "pending" && <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid rgba(123,104,238,0.2)", borderTop: "2px solid #9B8FF5", animation: "spin 1s linear infinite" }} />}
+                      {c.status === "found" && c.thumbUrl && (
+                        <img src={c.thumbUrl} alt={c.word} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      )}
+                      {c.status === "notfound" && <div style={{ fontSize: 28, opacity: 0.3 }}>🚫</div>}
+                      {c.status === "saved" && (
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(74,222,128,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <CheckCircle2 size={32} color="#4ADE80" />
+                        </div>
+                      )}
+                      {/* Selected overlay */}
+                      {c.selected && c.status === "found" && (
+                        <div style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: "#9B8FF5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Check size={13} color="#fff" />
+                        </div>
+                      )}
+                      {/* Not found label */}
+                      {c.status === "notfound" && (
+                        <div style={{ position: "absolute", bottom: 4, left: 0, right: 0, textAlign: "center", fontSize: 10, color: "var(--text-4)" }}>Không tìm thấy</div>
+                      )}
+                    </div>
+                    {/* Word info */}
+                    <div style={{ padding: "8px 10px" }}>
+                      <div style={{ fontWeight: 800, fontSize: 13, color: "var(--text-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.word}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{c.meaning}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Save progress */}
+          {saving && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" }}>
+                <motion.div animate={{ width: `${saveProgress}%` }} style={{ height: "100%", background: "linear-gradient(90deg,#7B68EE,#4ADE80)", borderRadius: 99 }} />
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", textAlign: "center" }}>Đang lưu... {saveProgress}%</div>
+            </div>
+          )}
+
+          {done && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              style={{ padding: "14px", borderRadius: "var(--r-md)", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", textAlign: "center" }}>
+              <div style={{ fontSize: 28, marginBottom: 6 }}>🎉</div>
+              <div style={{ fontWeight: 700, color: "#4ADE80", fontSize: 14 }}>Đã lưu ảnh tự động cho {candidates.filter(c=>c.status==="saved").length} từ vựng!</div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>Ảnh sẽ hiển thị ngay trong thẻ Flashcard</div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)", display: "flex", gap: 10, alignItems: "center", flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: "var(--text-4)", flex: 1 }}>
+            {done ? <span style={{ color: "#4ADE80", fontWeight: 600 }}>✓ Hoàn tất</span>
+              : saving ? "Đang lưu..."
+              : selectedCount > 0 ? <span style={{ color: "#9B8FF5", fontWeight: 600 }}>{selectedCount} ảnh được chọn</span>
+              : candidates.length > 0 && !fetching ? "Chưa chọn ảnh nào"
+              : ""}
+          </span>
+          <button onClick={onClose} className="btn btn-secondary" style={{ padding: "10px 20px" }}>{done ? "Đóng" : "Hủy"}</button>
+          {!done && !fetching && foundCount > 0 && (
+            <button onClick={handleSave} disabled={selectedCount === 0 || saving} className="btn btn-primary"
+              style={{ padding: "10px 24px", background: selectedCount > 0 ? "linear-gradient(135deg,#7B68EE,#9B8FF5)" : undefined,
+                opacity: selectedCount === 0 ? 0.5 : 1 }}>
+              {saving ? `Đang lưu ${saveProgress}%...` : `✓ Lưu ${selectedCount} ảnh`}
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 /* ── Image Fix Modal ── */
 function ImageFixModal({ words, onClose, onUpdated }: {
   words: Word[];
@@ -1153,6 +1443,7 @@ export default function VocabularyPage() {
   const [showImport, setShowImport] = useState(false);
   const [showCleanup, setShowCleanup] = useState(false);
   const [showImageFix, setShowImageFix] = useState(false);
+  const [showAutoImage, setShowAutoImage] = useState(false);
   const [showFixMenu, setShowFixMenu] = useState(false);
   const [selected, setSelected]   = useState<Word|null>(null);
   const [showFilter, setShowFilter] = useState(false);
@@ -1261,7 +1552,7 @@ export default function VocabularyPage() {
                     style={{
                       width: "100%", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10,
                       background: "none", border: "none", cursor: "pointer", textAlign: "left",
-                      WebkitTapHighlightColor: "transparent"
+                      borderBottom: "1px solid rgba(255,255,255,0.06)", WebkitTapHighlightColor: "transparent"
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = "rgba(45,212,191,0.08)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "none")}
@@ -1272,6 +1563,25 @@ export default function VocabularyPage() {
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-1)" }}>Xử lý thêm ảnh</div>
                       <div style={{ fontSize: 11, color: "var(--text-4)", marginTop: 1 }}>Dán URL ảnh hàng loạt cho từ chưa có ảnh</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => { setShowAutoImage(true); setShowFixMenu(false); }}
+                    style={{
+                      width: "100%", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10,
+                      background: "none", border: "none", cursor: "pointer", textAlign: "left",
+                      WebkitTapHighlightColor: "transparent"
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(123,104,238,0.08)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(123,104,238,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Sparkles size={15} color="#9B8FF5" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-1)" }}>Tự động thêm ảnh</div>
+                      <div style={{ fontSize: 11, color: "var(--text-4)", marginTop: 1 }}>AI tìm ảnh từ Wikimedia · Xem trước rồi lưu</div>
                     </div>
                   </button>
                 </motion.div>
@@ -1359,7 +1669,7 @@ export default function VocabularyPage() {
                 {w.imageUrl ? (
                   <div style={{ width:28, height:28, borderRadius:6, overflow:"hidden", flexShrink:0,
                     border:"1px solid var(--border)" }}>
-                    <img src={w.imageUrl} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                    <img src={w.imageUrl} alt="" referrerPolicy="no-referrer" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                   </div>
                 ) : (
                   <div style={{ width:28, height:28, borderRadius:6, flexShrink:0,
@@ -1424,6 +1734,7 @@ export default function VocabularyPage() {
               {w.imageUrl && (
                 <div style={{ height:100, overflow:"hidden" }}>
                   <img src={w.imageUrl} alt={w.word}
+                    referrerPolicy="no-referrer"
                     style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                 </div>
               )}
@@ -1480,6 +1791,19 @@ export default function VocabularyPage() {
                 return upd ? { ...w, imageUrl: upd.imageUrl } : w;
               }));
               setTimeout(() => setShowImageFix(false), 2500);
+            }}
+          />
+        )}
+        {showAutoImage && (
+          <AutoImageModal
+            words={words}
+            onClose={() => setShowAutoImage(false)}
+            onUpdated={(updates) => {
+              setWords(prev => prev.map(w => {
+                const upd = updates.find(u => u.id === w.id);
+                return upd ? { ...w, imageUrl: upd.imageUrl } : w;
+              }));
+              setTimeout(() => setShowAutoImage(false), 2500);
             }}
           />
         )}
