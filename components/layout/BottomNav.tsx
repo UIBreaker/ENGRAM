@@ -1,13 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, BrainCircuit, Target, Zap } from "lucide-react";
 
 const nav = [
-  { href: "/",           icon: Home,         label: "Home"     },
-  { href: "/vocabulary", icon: BookOpen,      label: "Từ vựng"  },
-  { href: "/flashcard",  icon: BrainCircuit,  label: "Ôn tập"   },
-  { href: "/practice",   icon: Target,        label: "Bài tập"  },
+  { href: "/",           label: "HOME",   emoji: "🌿" },
+  { href: "/vocabulary", label: "VOCAB",  emoji: "📜" },
+  { href: "/flashcard",  label: "REVIEW", emoji: "🔮" },
+  { href: "/practice",   label: "TRAIN",  emoji: "⚔️" },
 ];
 
 export default function BottomNav() {
@@ -17,54 +16,36 @@ export default function BottomNav() {
       <style>{`
         @media (min-width: 768px) { .bottom-nav { display: none !important; } }
         .nav-item { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-        .nav-item:active .nav-icon { transform: scale(0.88); }
-        .nav-icon { transition: transform 0.12s ease; }
+        .nav-item:active { transform: translateY(2px); }
       `}</style>
       <nav className="bottom-nav" style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: "rgba(7,7,15,0.92)",
-        borderTop: "1px solid rgba(255,255,255,0.07)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
+        background: "#101611",
+        borderTop: "2px solid #28352A",
+        boxShadow: "0 -3px 0 #090D09",
         display: "flex",
         paddingBottom: "env(safe-area-inset-bottom)",
-        paddingTop: 4,
       }}>
-        {nav.map(({ href, icon: Icon, label }) => {
+        {nav.map(({ href, label, emoji }) => {
           const active = href === "/" ? path === "/" : path.startsWith(href);
           return (
             <Link key={href} href={href} className="nav-item" style={{
               flex: 1, display: "flex", flexDirection: "column",
-              alignItems: "center", gap: 4,
-              padding: "8px 4px 10px",
+              alignItems: "center", gap: 3,
+              padding: "10px 4px 12px",
               textDecoration: "none",
-              position: "relative",
+              background: active ? "#1B241C" : "transparent",
+              borderTop: active ? "2px solid #65D376" : "2px solid transparent",
+              marginTop: -2,
             }}>
-              {/* Active glow pill */}
-              {active && (
-                <span style={{
-                  position: "absolute",
-                  top: 6,
-                  width: 40,
-                  height: 34,
-                  borderRadius: 12,
-                  background: "rgba(123,104,238,0.18)",
-                  border: "1px solid rgba(123,104,238,0.28)",
-                }} />
-              )}
-              <span className="nav-icon" style={{ position: "relative", zIndex: 1 }}>
-                <Icon
-                  size={21}
-                  strokeWidth={active ? 2.5 : 1.8}
-                  color={active ? "#9B8FF5" : "rgba(255,255,255,0.28)"}
-                />
-              </span>
+              <span style={{ fontSize: 20, lineHeight: 1 }}>{emoji}</span>
               <span style={{
-                fontSize: 10,
-                fontWeight: active ? 700 : 500,
-                color: active ? "#9B8FF5" : "rgba(255,255,255,0.28)",
+                fontSize: 8,
+                fontFamily: "var(--font-press-start), 'Press Start 2P', monospace",
+                fontWeight: 400,
+                color: active ? "#F4EBD9" : "#6F876E",
                 lineHeight: 1,
-                position: "relative", zIndex: 1,
+                letterSpacing: "0.04em",
               }}>
                 {label}
               </span>

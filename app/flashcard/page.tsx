@@ -170,8 +170,8 @@ function ModeSelector({
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ textAlign: "center", marginBottom: 6 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-1)" }}>Chế Độ Ôn Tập (SM-2)</h2>
-        <p style={{ fontSize: 13, color: "var(--text-3)", marginTop: 4 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#F4EBD9", fontFamily: "var(--font-inter), sans-serif" }}>Chế Độ Ôn Tập (SM-2)</h2>
+        <p style={{ fontSize: 13, color: "#B8CBB7", marginTop: 4, fontFamily: "var(--font-inter), sans-serif" }}>
           Phương pháp ghi nhớ ngắt quãng chống đường cong lãng quên
         </p>
       </div>
@@ -181,83 +181,89 @@ function ModeSelector({
 
           {/* 1.1. Ôn tập Theo lịch */}
           <button onClick={() => onSelectMode("due")} className="btn btn-secondary" style={{
-            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: "var(--r-md)",
-            border: dueCount > 0 ? "1.5px solid rgba(123,104,238,0.4)" : "1px solid var(--border)",
-            background: dueCount > 0 ? "rgba(123,104,238,0.08)" : "var(--bg-raised)",
-            minHeight: "68px"
+            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: 0,
+            border: dueCount > 0 ? "2px solid #55B564" : "2px solid #344436",
+            background: dueCount > 0 ? "rgba(101,211,118,0.12)" : "#19201A",
+            boxShadow: "3px 3px 0 #0A0D0A",
+            minHeight: "68px",
+            fontFamily: "var(--font-inter), sans-serif",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(123,104,238,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Zap size={18} color="#9B8FF5" />
+              <div style={{ width: 38, height: 38, border: "2px solid #55B564", background: "rgba(101,211,118,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Zap size={18} color="#65D376" />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>🎯 Ôn tập Theo lịch</div>
-                <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>Các từ đã đến mốc next_review hôm nay</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "#F4EBD9", fontFamily: "var(--font-inter), sans-serif" }}>🎯 Ôn tập Theo lịch</div>
+                <div style={{ fontSize: 13, color: "#B8CBB7", marginTop: 2, fontFamily: "var(--font-inter), sans-serif" }}>Các từ đã đến mốc next_review hôm nay</div>
               </div>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: dueCount > 0 ? "#7B68EE" : "rgba(255,255,255,0.05)", color: dueCount > 0 ? "white" : "var(--text-3)" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", background: dueCount > 0 ? "#3B8246" : "#28332A", color: dueCount > 0 ? "#F4EBD9" : "#7C967B", border: "1px solid #364638" }}>
               {dueCount} từ
             </span>
           </button>
 
           {/* 1.2. Ôn tập "Cấp cứu" từ hay sai */}
           <button onClick={() => onSelectMode("weak")} className="btn btn-secondary" style={{
-            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: "var(--r-md)", background: "var(--bg-raised)", minHeight: "68px"
+            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: 0, background: "#19201A", border: "2px solid #344436", boxShadow: "3px 3px 0 #0A0D0A", minHeight: "68px",
+            fontFamily: "var(--font-inter), sans-serif",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(251,113,133,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <ShieldAlert size={18} color="#FB7185" />
+              <div style={{ width: 38, height: 38, border: "2px solid rgba(232,106,130,0.5)", background: "rgba(232,106,130,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <ShieldAlert size={18} color="#E86A82" />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>🔴 &ldquo;Cấp cứu&rdquo; từ hay sai</div>
-                <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>Tỷ lệ sai cao hoặc thuộc độ khó thấp</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "#F4EBD9", fontFamily: "var(--font-inter), sans-serif" }}>🔴 &ldquo;Cấp cứu&rdquo; từ hay sai</div>
+                <div style={{ fontSize: 13, color: "#B8CBB7", marginTop: 2, fontFamily: "var(--font-inter), sans-serif" }}>Tỷ lệ sai cao hoặc thuộc độ khó thấp</div>
               </div>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: weakCount > 0 ? "rgba(251,113,133,0.15)" : "rgba(255,255,255,0.05)", color: weakCount > 0 ? "#FB7185" : "var(--text-3)", border: weakCount > 0 ? "1px solid rgba(251,113,133,0.3)" : "none" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", background: weakCount > 0 ? "rgba(232,106,130,0.18)" : "#28332A", color: weakCount > 0 ? "#E86A82" : "#7C967B", border: "1px solid #364638" }}>
               {weakCount} từ
             </span>
           </button>
 
           {/* 1.3. Ôn tập Nhanh 2 phút */}
           <button onClick={() => onSelectMode("micro")} className="btn btn-secondary" style={{
-            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: "var(--r-md)", background: "var(--bg-raised)", minHeight: "68px"
+            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: 0, background: "#19201A", border: "2px solid #344436", boxShadow: "3px 3px 0 #0A0D0A", minHeight: "68px",
+            fontFamily: "var(--font-inter), sans-serif",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(245,158,11,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Timer size={18} color="#F59E0B" />
+              <div style={{ width: 38, height: 38, border: "2px solid rgba(244,196,48,0.5)", background: "rgba(244,196,48,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Timer size={18} color="#F4C430" />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>⏱️ Ôn tập Nhanh 2 phút</div>
-                <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>Lướt ngẫu nhiên 5-10 từ khi rảnh rỗi</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "#F4EBD9", fontFamily: "var(--font-inter), sans-serif" }}>⏱️ Ôn tập Nhanh 2 phút</div>
+                <div style={{ fontSize: 13, color: "#B8CBB7", marginTop: 2, fontFamily: "var(--font-inter), sans-serif" }}>Lướt ngẫu nhiên 5-10 từ khi rảnh rỗi</div>
               </div>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 99, background: "rgba(245,158,11,0.15)", color: "#F59E0B" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", background: "rgba(244,196,48,0.15)", color: "#F4C430", border: "1px solid #364638" }}>
               5-10 từ
             </span>
           </button>
 
           {/* Ôn theo chủ đề */}
           <button onClick={() => setShowTopics(true)} className="btn btn-secondary" style={{
-            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: "var(--r-md)", background: "var(--bg-raised)", minHeight: "68px"
+            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: 0, background: "#19201A", border: "2px solid #344436", boxShadow: "3px 3px 0 #0A0D0A", minHeight: "68px",
+            fontFamily: "var(--font-inter), sans-serif",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: "rgba(45,212,191,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Sparkles size={18} color="#2DD4BF" />
+              <div style={{ width: 38, height: 38, border: "2px solid rgba(78,205,196,0.5)", background: "rgba(78,205,196,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Sparkles size={18} color="#4ECDC4" />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>🏷️ Ôn theo chủ đề</div>
-                <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>Lọc từ theo 16 chủ đề học tập</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "#F4EBD9", fontFamily: "var(--font-inter), sans-serif" }}>🏷️ Ôn theo chủ đề</div>
+                <div style={{ fontSize: 13, color: "#B8CBB7", marginTop: 2, fontFamily: "var(--font-inter), sans-serif" }}>Lọc từ theo 16 chủ đề học tập</div>
               </div>
             </div>
-            <ChevronRight size={16} color="var(--text-3)" />
+            <ChevronRight size={16} color="#B8CBB7" />
           </button>
 
           {/* Ôn tất cả */}
           <button onClick={() => onSelectMode("all")} className="btn btn-secondary" style={{
-            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: "var(--r-md)", background: "var(--bg-raised)", minHeight: "60px"
+            padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", textAlign: "left", borderRadius: 0, background: "#19201A", border: "2px solid #344436", boxShadow: "3px 3px 0 #0A0D0A", minHeight: "60px",
+            fontFamily: "var(--font-inter), sans-serif",
           }}>
-            <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text-2)" }}>📚 Ôn tất cả từ vựng</div>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "var(--text-4)" }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "#F4EBD9", fontFamily: "var(--font-inter), sans-serif" }}>📚 Ôn tất cả từ vựng</div>
+            <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 8px", background: "#28332A", color: "#7C967B", border: "1px solid #364638" }}>
               {allCount} từ
             </span>
           </button>

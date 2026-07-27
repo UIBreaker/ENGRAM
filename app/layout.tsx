@@ -1,23 +1,29 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "@/components/layout/ClientLayout";
 
 const inter = Inter({
-  subsets: ["latin"],
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-inter",
   display: "swap",
-  // Only load weights we actually use
-  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+const pressStart2P = Press_Start_2P({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-press-start",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
-  themeColor: "#07070F",
+  themeColor: "#131814",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false,          // prevent pinch-zoom messing layouts
-  viewportFit: "cover",         // extend into notch / Dynamic Island area
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -26,19 +32,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent", // full-screen on iOS home screen
+    statusBarStyle: "black-translucent",
     title: "ENGRAM",
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className={inter.variable}>
+    <html lang="vi" className={`${inter.variable} ${pressStart2P.variable}`}>
       <head>
-        {/* Preconnect to Supabase for faster first query */}
         <link rel="preconnect" href="https://zpqrvnlbldhbpnakozhy.supabase.co" />
-        {/* Preconnect to Unsplash for flashcard images */}
-        <link rel="preconnect" href="https://source.unsplash.com" />
       </head>
       <body>
         <ClientLayout>{children}</ClientLayout>

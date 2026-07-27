@@ -133,7 +133,7 @@ export default function AIWritingPracticePage() {
           </div>
           <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 1 }}>Viết 2-3 câu chứa các từ chỉ định</div>
         </div>
-        <button onClick={() => pickNewWords(allWords)} className="btn btn-ghost" style={{ padding: 8, title: "Đổi 3 từ khác" }}>
+        <button onClick={() => pickNewWords(allWords)} className="btn btn-ghost" title="Đổi 3 từ khác" style={{ padding: 8 }}>
           <RefreshCw size={16} color="var(--text-3)" />
         </button>
       </div>
