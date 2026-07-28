@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, BrainCircuit, Target } from "lucide-react";
+import { Home, BookOpen, BrainCircuit, Target, Sparkles } from "lucide-react";
 
 const nav = [
-  { href: "/",           icon: Home,         label: "Trang chủ",     emoji: "🌿" },
-  { href: "/vocabulary", icon: BookOpen,      label: "Kho từ vựng",   emoji: "📜" },
-  { href: "/flashcard",  icon: BrainCircuit,  label: "Ôn tập Flashcard", emoji: "🔮" },
-  { href: "/practice",   icon: Target,        label: "Luyện tập",     emoji: "⚔️" },
+  { href: "/",           icon: Home,         label: "Trang chủ",      color: "#FF5964" },
+  { href: "/vocabulary", icon: BookOpen,      label: "Kho từ vựng",    color: "#FFE052" },
+  { href: "/flashcard",  icon: BrainCircuit,  label: "Ôn tập",         color: "#9C8EFA" },
+  { href: "/practice",   icon: Target,        label: "Luyện tập",      color: "#4ECCD3" },
 ];
 
 export default function Sidebar() {
@@ -18,100 +18,115 @@ export default function Sidebar() {
       <style>{`
         @media (max-width: 767px) { .sidebar-wrap { display: none !important; } }
 
-        .sidebar-link {
-          transition: none;
-          position: relative;
+        .neo-sidebar-link {
+          transition: transform 0.08s ease, box-shadow 0.08s ease;
         }
-        .sidebar-link:hover {
-          background: rgba(101,211,118,0.08) !important;
-          color: #65D376 !important;
-          border-color: #364638 !important;
-          transform: translateX(3px);
-        }
-        .sidebar-link.active::before {
-          content: '◆';
-          color: #65D376;
-          margin-right: 6px;
-          font-size: 8px;
+        .neo-sidebar-link:hover {
+          transform: translate(-2px, -2px);
+          box-shadow: 4px 4px 0px #000000 !important;
+          background: #FFFFFF !important;
+          color: #000000 !important;
         }
       `}</style>
 
       <aside className="sidebar-wrap" style={{
         position: "fixed", left: 0, top: 0, height: "100dvh", width: 220,
-        background: "#101611",
-        borderRight: "2px solid #28352A",
+        background: "#F5EFE6",
+        borderRight: "2.5px solid #000000",
         display: "flex", flexDirection: "column", zIndex: 40,
-        boxShadow: "3px 0 0 #090D09",
       }}>
-        {/* Logo Header */}
+        {/* Logo Card Header */}
         <div style={{
-          padding: "20px 16px 16px", zIndex: 1,
-          borderBottom: "2px solid #202B22",
+          padding: "20px 16px 16px",
+          borderBottom: "2.5px solid #000000",
         }}>
           <div style={{
-            border: "2px solid #364638",
-            padding: "10px 12px",
-            background: "#161E17",
-            boxShadow: "3px 3px 0 #0A0D0A",
+            border: "2.5px solid #000000",
+            borderRadius: "14px",
+            padding: "12px 14px",
+            background: "#FF5964",
+            boxShadow: "4px 4px 0px #000000",
             display: "flex",
             alignItems: "center",
             gap: 10,
+            color: "#FFFFFF",
           }}>
-            <div style={{ fontSize: 20 }}>🌿</div>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: "#FFE052", border: "2px solid #000",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "2px 2px 0 #000", flexShrink: 0,
+            }}>
+              <Sparkles size={18} color="#000" />
+            </div>
             <div>
               <div style={{
-                fontFamily: "var(--font-press-start), 'Press Start 2P', monospace",
-                fontSize: 12,
-                fontWeight: 400,
-                color: "#65D376",
-                letterSpacing: "0.04em",
-                lineHeight: 1.3,
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: 16,
+                fontWeight: 900,
+                color: "#FFFFFF",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.1,
+                textShadow: "1px 1px 0 #000",
               }}>
                 ENGRAM
               </div>
               <div style={{
-                fontSize: 11,
-                color: "#B0C4AF",
+                fontSize: 10,
+                color: "#FFFFFF",
                 marginTop: 2,
                 fontFamily: "var(--font-inter), sans-serif",
-                fontWeight: 500,
-                letterSpacing: "0.04em",
+                fontWeight: 800,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                opacity: 0.9,
               }}>
-                COZY VOCAB RPG
+                NEO-BRUTALISM UI
               </div>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav style={{ padding: "16px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 6, zIndex: 1 }}>
+        <nav style={{ padding: "20px 14px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{
-            fontFamily: "var(--font-press-start), 'Press Start 2P', monospace",
-            fontSize: 8,
-            color: "#58735A",
-            padding: "0 6px 6px",
-            letterSpacing: "0.1em",
+            fontSize: 11,
+            fontWeight: 900,
+            color: "#000000",
+            padding: "0 4px 2px",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
           }}>
-            MENU
+            MENU NAV
           </div>
 
-          {nav.map(({ href, label, emoji }) => {
+          {nav.map(({ href, label, icon: Icon, color }) => {
             const active = href === "/" ? path === "/" : path.startsWith(href);
             return (
               <Link key={href} href={href}
-                className={`sidebar-link${active ? " active" : ""}`}
+                className="neo-sidebar-link"
                 style={{
-                  display: "flex", alignItems: "center", gap: 0,
-                  padding: "10px 12px",
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "11px 14px",
+                  borderRadius: 12,
                   fontFamily: "var(--font-inter), sans-serif",
-                  fontWeight: 600, fontSize: 13,
-                  color: active ? "#F4EBD9" : "#B0C4AF",
-                  background: active ? "#202C21" : "transparent",
-                  border: active ? "2px solid #485E4B" : "2px solid transparent",
+                  fontWeight: 800, fontSize: 14,
+                  color: "#000000",
+                  background: active ? color : "#FFFFFF",
+                  border: "2.5px solid #000000",
                   textDecoration: "none",
-                  boxShadow: active ? "3px 3px 0 #0A0D0A" : "none",
+                  boxShadow: active ? "4px 4px 0px #000000" : "3px 3px 0px #000000",
+                  transform: active ? "translate(-1px, -1px)" : "none",
                 }}>
-                <span style={{ marginRight: 10, fontSize: 16 }}>{emoji}</span>
+                <div style={{
+                  width: 26, height: 26, borderRadius: 6,
+                  background: active ? "#FFFFFF" : color,
+                  border: "2px solid #000000",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <Icon size={14} color="#000000" strokeWidth={2.5} />
+                </div>
                 {label}
               </Link>
             );
@@ -119,14 +134,19 @@ export default function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div style={{ padding: "16px 12px 20px", zIndex: 1 }}>
+        <div style={{ padding: "16px 14px 20px" }}>
           <div style={{
+            border: "2.5px solid #000000",
+            borderRadius: 12,
+            background: "#FFE052",
+            padding: "10px 12px",
+            boxShadow: "3px 3px 0px #000000",
+            fontSize: 11,
+            fontWeight: 800,
+            color: "#000000",
             textAlign: "center",
-            fontFamily: "var(--font-press-start), 'Press Start 2P', monospace",
-            fontSize: 7, color: "#445643",
-            letterSpacing: "0.08em",
           }}>
-            COZY PIXEL EDITION
+            ✨ VIBRANT NEO-BRUTALISM
           </div>
         </div>
       </aside>

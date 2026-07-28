@@ -5,16 +5,9 @@ import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { getWords, getStreak, getSessions, getDueWords } from "@/lib/db";
 import { Word, StudySession } from "@/lib/types";
+import { BrainCircuit, Target, Plus, BookOpen, Clock, CheckCircle2, TrendingUp, Flame, ArrowRight, Sparkles } from "lucide-react";
 
 const DAYS = ["CN","T2","T3","T4","T5","T6","T7"];
-const PX = "var(--font-press-start), 'Press Start 2P', monospace";
-const VT = "var(--font-vt323), 'VT323', monospace";
-
-const GREEN  = "#65D376";
-const CYAN   = "#4ECDC4";
-const PINK   = "#E86A82";
-const YELLOW = "#F4C430";
-const PURPLE = "#A084E8";
 
 function getLast7Days() {
   return Array.from({ length: 7 }, (_, i) => {
@@ -23,40 +16,49 @@ function getLast7Days() {
   });
 }
 
-/* ── Cozy Nature Pixel Stat Card ── */
-function StatCard({ label, value, color, emoji, delay }: {
-  label: string; value: number; color: string; emoji: string; delay: number;
+/* ── Neubrutal Stat Card ── */
+function StatCard({ label, value, color, icon: Icon, delay }: {
+  label: string; value: number; color: string; icon: React.ElementType; delay: number;
 }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
       style={{
-        background: "#1A221B",
-        border: `2px solid #324434`,
-        boxShadow: `3px 3px 0 #0A0D0A`,
-        padding: "14px 14px",
-        position: "relative",
-        overflow: "hidden",
+        background: "#FFFFFF",
+        border: "2.5px solid #000000",
+        borderRadius: 16,
+        boxShadow: "4px 4px 0px #000000",
+        padding: "16px 14px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
       }}>
-      {/* Corner leaf accent */}
-      <div style={{ position: "absolute", top: 0, left: 0, width: 4, height: 4, background: color }} />
-      <div style={{ position: "absolute", bottom: 0, right: 0, width: 4, height: 4, background: color }} />
-
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        <span style={{ fontSize: 20 }}>{emoji}</span>
-        <span style={{ fontFamily: VT, fontSize: 16, color: "#B0C4AF" }}>{label}</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{
+          width: 38, height: 38, borderRadius: 10,
+          background: color, border: "2px solid #000000",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "2px 2px 0px #000000",
+        }}>
+          <Icon size={18} color="#000000" strokeWidth={2.5} />
+        </div>
+        <span style={{
+          fontSize: 10, fontWeight: 900, textTransform: "uppercase",
+          padding: "3px 8px", borderRadius: 99, background: "#F5EFE6", border: "1.5px solid #000000"
+        }}>
+          STAT
+        </span>
       </div>
-      <div style={{
-        fontFamily: PX, fontSize: 18, color, lineHeight: 1,
-      }}>
-        {value}
+      <div>
+        <div style={{ fontSize: 24, fontWeight: 900, color: "#000000", lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#444444", marginTop: 4 }}>{label}</div>
       </div>
     </motion.div>
   );
 }
 
-/* ── Cozy Nature Pixel Quick Action Button ── */
-function QuickBtn({ href, emoji, title, sub, color }: {
-  href: string; emoji: string; title: string; sub: string; color: string;
+/* ── Neubrutal Quick Action Button ── */
+function QuickBtn({ href, icon: Icon, title, sub, bg }: {
+  href: string; icon: React.ElementType; title: string; sub: string; bg: string;
 }) {
   const [hover, setHover] = useState(false);
   return (
@@ -66,77 +68,57 @@ function QuickBtn({ href, emoji, title, sub, color }: {
         onMouseLeave={() => setHover(false)}
         style={{
           display: "flex", alignItems: "center", gap: 14,
-          padding: "14px 16px",
-          background: hover ? "#222B23" : "#1A221B",
-          border: `2px solid ${hover ? color : "#324434"}`,
-          boxShadow: hover ? `4px 4px 0 #0A0D0A` : `3px 3px 0 #0A0D0A`,
-          transform: hover ? "translate(-1px,-1px)" : "none",
-          transition: "none",
+          padding: "16px 18px",
+          background: bg,
+          border: "2.5px solid #000000",
+          borderRadius: 16,
+          boxShadow: hover ? "6px 6px 0px #000000" : "4px 4px 0px #000000",
+          transform: hover ? "translate(-2px, -2px)" : "none",
+          transition: "transform 0.08s ease, boxShadow 0.08s ease",
           cursor: "pointer",
         }}>
         <div style={{
-          width: 38, height: 38, flexShrink: 0,
-          border: `2px solid ${color}44`,
-          background: color + "18",
+          width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+          background: "#FFFFFF", border: "2px solid #000000",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 20,
+          boxShadow: "2px 2px 0px #000000",
         }}>
-          {emoji}
+          <Icon size={20} color="#000000" strokeWidth={2.5} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: PX, fontSize: 9, color,
-            letterSpacing: "0.04em", marginBottom: 4,
+            fontSize: 15, fontWeight: 900, color: "#000000",
+            letterSpacing: "-0.01em", marginBottom: 2,
           }}>
             {title}
           </div>
-          <div style={{ fontFamily: VT, fontSize: 15, color: "#B0C4AF" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#2B2B2B" }}>
             {sub}
           </div>
         </div>
-        <div style={{ fontFamily: PX, fontSize: 10, color: color }}>◆</div>
+        <div style={{
+          width: 28, height: 28, borderRadius: 8,
+          background: "#FFFFFF", border: "2px solid #000000",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "1.5px 1.5px 0px #000000",
+        }}>
+          <ArrowRight size={14} color="#000000" strokeWidth={3} />
+        </div>
       </div>
     </Link>
   );
 }
 
-/* ── Chart Tooltip ── */
+/* ── Neubrutal Tooltip ── */
 function ChartTip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: "#131814", border: `2px solid #364638`,
-      boxShadow: "3px 3px 0 #0A0D0A", padding: "6px 12px",
-      fontFamily: VT,
+      background: "#FFFFFF", border: "2.5px solid #000000",
+      borderRadius: 8, boxShadow: "3px 3px 0 #000", padding: "6px 12px",
     }}>
-      <div style={{ fontSize: 14, color: "#B0C4AF", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 18, color: GREEN }}>{payload[0].value} từ</div>
-    </div>
-  );
-}
-
-/* ── Streak Display ── */
-function StreakBox({ n }: { n: number }) {
-  return (
-    <div style={{
-      border: `2px solid #50372E`,
-      boxShadow: `3px 3px 0 #0A0D0A`,
-      background: "#221A18",
-      padding: "10px 14px",
-      textAlign: "center",
-      minWidth: 74,
-      position: "relative",
-    }}>
-      <div style={{ fontSize: 18, marginBottom: 2 }}>🔥</div>
-      <div style={{
-        fontFamily: PX, fontSize: 18, color: "#F38A3A",
-        lineHeight: 1,
-      }}>
-        {n}
-      </div>
-      <div style={{ fontFamily: VT, fontSize: 13, color: "#C89578", marginTop: 3 }}>
-        NGÀY STREAK
-      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#666", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 900, color: "#000" }}>{payload[0].value} từ</div>
     </div>
   );
 }
@@ -168,7 +150,7 @@ export default function Dashboard() {
   const mastered   = words.filter(w => w.difficulty >= 3).length;
   const todayWords = sessions.find(s => s.date === new Date().toISOString().split("T")[0])?.wordsStudied ?? 0;
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "BUỔI SÁNG LÀNH" : hour < 18 ? "BUỔI CHIỀU AN" : "BUỔI TỐI ẤM ÁP";
+  const greeting = hour < 12 ? "Chào buổi sáng" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
 
   const hardWords = [...words]
     .filter(w => w.reviewCount > 0)
@@ -178,109 +160,124 @@ export default function Dashboard() {
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh", flexDirection: "column", gap: 16 }}>
       <div style={{
-        fontFamily: PX, fontSize: 10, color: GREEN,
+        fontSize: 16, fontWeight: 900, color: "#000",
+        padding: "10px 20px", background: "#FFE052", border: "2.5px solid #000",
+        borderRadius: 12, boxShadow: "4px 4px 0 #000",
       }}>
-        ĐANG TẢI...
+        ✨ ĐANG TẢI DỮ LIỆU...
       </div>
-      <div style={{ width: 140, height: 10, border: `2px solid #364638`, background: "#131814" }}>
-        <div style={{
-          width: "50%", height: "100%", background: GREEN,
-          animation: "loadBar 1.2s steps(6) infinite",
-        }} />
-      </div>
-      <style>{`
-        @keyframes loadBar { 0% { width: 0% } 100% { width: 100% } }
-      `}</style>
     </div>
   );
 
   return (
-    <div style={{ maxWidth: 660, margin: "0 auto", padding: "24px 16px 12px" }}>
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px 12px" }}>
 
-      {/* ── Header Card ── */}
-      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 20 }}>
+      {/* ── Header Hero Card ── */}
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 22 }}>
         <div style={{
-          border: `2px solid #344436`,
-          boxShadow: "3px 3px 0 #0A0D0A",
-          padding: "18px 20px",
-          background: "#19201A",
+          border: "2.5px solid #000000",
+          borderRadius: 20,
+          boxShadow: "5px 5px 0px #000000",
+          padding: "20px 22px",
+          background: "#FF5964",
+          color: "#FFFFFF",
           position: "relative",
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontFamily: VT, fontSize: 16, color: "#6F876E", marginBottom: 4 }}>
-                🌸 {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" })}
-              </div>
               <div style={{
-                fontFamily: PX, fontSize: 12, color: "#F4EBD9", lineHeight: 1.4,
-                letterSpacing: "0.04em",
+                fontSize: 11, fontWeight: 900, textTransform: "uppercase",
+                padding: "3px 10px", borderRadius: 99, background: "#FFE052", color: "#000000",
+                border: "2px solid #000000", display: "inline-block", marginBottom: 8, boxShadow: "2px 2px 0 #000",
               }}>
-                {greeting} 🌱
+                📅 {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" })}
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 900, color: "#FFFFFF", lineHeight: 1.2, textShadow: "1.5px 1.5px 0 #000" }}>
+                {greeting}! 👋
               </div>
               <div style={{
-                fontFamily: VT, fontSize: 18, marginTop: 6,
-                color: due > 0 ? PINK : GREEN,
+                fontSize: 14, fontWeight: 700, marginTop: 6,
+                color: "#FFFFFF", opacity: 0.95, textShadow: "1px 1px 0 #000"
               }}>
                 {due > 0
-                  ? `🌾 Có ${due} từ vựng cần ôn tập hôm nay`
-                  : `✨ Bạn đã hoàn thành xuất sắc bài ôn hôm nay! (+${todayWords} từ)`}
+                  ? `⚡ Có ${due} từ vựng cần bạn ôn tập hôm nay`
+                  : `🎉 Tuyệt vời! Hôm nay bạn đã ôn xong tất cả (${todayWords} từ)`}
               </div>
             </div>
-            <StreakBox n={streak} />
+
+            {/* Streak Badge Card */}
+            <div style={{
+              border: "2.5px solid #000000",
+              borderRadius: 14,
+              boxShadow: "3px 3px 0px #000000",
+              background: "#FFE052",
+              padding: "10px 14px",
+              textAlign: "center",
+              minWidth: 78,
+              color: "#000000",
+            }}>
+              <Flame size={22} color="#FF5964" style={{ margin: "0 auto 2px" }} />
+              <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1 }}>{streak}</div>
+              <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", marginTop: 2 }}>NGÀY</div>
+            </div>
           </div>
         </div>
       </motion.div>
 
       {/* ── Quick Actions ── */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
 
-        <div style={{ fontFamily: PX, fontSize: 8, color: "#6F876E", letterSpacing: "0.08em" }}>
-          HOẠT ĐỘNG CHÍNH
+        <div style={{ fontSize: 12, fontWeight: 900, textTransform: "uppercase", color: "#000000", letterSpacing: "0.06em" }}>
+          🚀 HÀNH ĐỘNG NHANH
         </div>
 
-        <QuickBtn href="/flashcard" emoji="🔮" title="ÔN TẬP FLASHCARD"
-          sub={due > 0 ? `${due} từ vựng đến hạn` : "Đã hoàn thành ôn tập!"} color={PURPLE} />
+        <QuickBtn href="/flashcard" icon={BrainCircuit} title="Ôn tập Flashcard"
+          sub={due > 0 ? `${due} từ vựng đến hạn hôm nay` : "Đã ôn xong tất cả từ!"} bg="#9C8EFA" />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <QuickBtn href="/practice" emoji="⚔️" title="LUYỆN TẬP" sub="4 chế độ rèn luyện" color={CYAN} />
-          <QuickBtn href="/vocabulary" emoji="📜" title="TỪ VỰNG" sub="Kho từ & Thêm mới" color={GREEN} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <QuickBtn href="/practice" icon={Target} title="Luyện tập" sub="4 dạng bài chơi" bg="#4ECCD3" />
+          <QuickBtn href="/vocabulary" icon={Plus} title="Thêm từ vựng" sub="Mở kho từ vựng" bg="#38E54D" />
         </div>
       </motion.div>
 
       {/* ── Stats Grid ── */}
-      <div style={{ marginBottom: 6 }}>
-        <div style={{ fontFamily: PX, fontSize: 8, color: "#6F876E", letterSpacing: "0.08em" }}>
-          THỐNG KÊ
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 900, textTransform: "uppercase", color: "#000000", letterSpacing: "0.06em" }}>
+          📊 THỐNG KÊ TIẾN ĐỘ
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
-        <StatCard emoji="📚" label="Tổng từ vựng"    value={words.length}  color={PURPLE} delay={0.08} />
-        <StatCard emoji="⏳" label="Cần ôn hôm nay"  value={due}           color={PINK}   delay={0.11} />
-        <StatCard emoji="🌱" label="Đã ghi nhớ sâu"  value={mastered}      color={GREEN}  delay={0.14} />
-        <StatCard emoji="✨" label="Học hôm nay"      value={todayWords}    color={YELLOW} delay={0.17} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+        <StatCard icon={BookOpen}     label="Tổng từ vựng"    value={words.length}  color="#9C8EFA" delay={0.08} />
+        <StatCard icon={Clock}        label="Cần ôn hôm nay"  value={due}           color="#FF5964" delay={0.11} />
+        <StatCard icon={CheckCircle2} label="Đã thuộc"         value={mastered}      color="#38E54D" delay={0.14} />
+        <StatCard icon={TrendingUp}   label="Đã học hôm nay"   value={todayWords}    color="#FFE052" delay={0.17} />
       </div>
 
-      {/* ── 7-Day Chart ── */}
+      {/* ── 7-Day Progress Chart ── */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         style={{
-          background: "#19201A", border: `2px solid #344436`,
-          boxShadow: "3px 3px 0 #0A0D0A", padding: "16px 16px 10px", marginBottom: 20,
+          background: "#FFFFFF", border: "2.5px solid #000000",
+          borderRadius: 20, boxShadow: "5px 5px 0px #000000",
+          padding: "18px 20px 14px", marginBottom: 24,
         }}>
-        <div style={{ fontFamily: PX, fontSize: 8, color: GREEN, marginBottom: 4, letterSpacing: "0.04em" }}>
-          TIẾN ĐỘ 7 NGÀY QUA
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: "#000000" }}>📈 Tiến độ 7 ngày qua</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#555555", marginTop: 2 }}>Số từ vựng đã ôn tập mỗi ngày</div>
+          </div>
+          <span style={{ fontSize: 11, fontWeight: 800, padding: "4px 10px", borderRadius: 99, background: "#4ECCD3", border: "2px solid #000" }}>
+            CHART
+          </span>
         </div>
-        <div style={{ fontFamily: VT, fontSize: 16, color: "#B0C4AF", marginBottom: 14 }}>
-          Số từ vựng đã ôn tập mỗi ngày
-        </div>
-        <ResponsiveContainer width="100%" height={110}>
-          <BarChart data={chart} barSize={18} barCategoryGap="35%">
-            <XAxis dataKey="day" axisLine={false} tickLine={false}
-              tick={{ fill: "#B0C4AF", fontSize: 13, fontFamily: VT }} />
-            <Tooltip content={<ChartTip />} cursor={{ fill: "rgba(101,211,118,0.05)" }} />
-            <Bar dataKey="v" radius={[0,0,0,0]}>
+        <ResponsiveContainer width="100%" height={120}>
+          <BarChart data={chart} barSize={20} barCategoryGap="30%">
+            <XAxis dataKey="day" axisLine={{ stroke: "#000", strokeWidth: 2 }} tickLine={false}
+              tick={{ fill: "#000000", fontSize: 12, fontWeight: 700 }} />
+            <Tooltip content={<ChartTip />} cursor={{ fill: "rgba(0,0,0,0.05)" }} />
+            <Bar dataKey="v" radius={[6, 6, 0, 0]} stroke="#000000" strokeWidth={2}>
               {chart.map((e, i) => (
-                <Cell key={i} fill={e.today ? GREEN : e.v > 0 ? "#3E7B48" : "#222D24"} />
+                <Cell key={i} fill={e.today ? "#FF5964" : e.v > 0 ? "#FFE052" : "#F5EFE6"} />
               ))}
             </Bar>
           </BarChart>
@@ -291,46 +288,52 @@ export default function Dashboard() {
       {hardWords.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
           style={{
-            background: "#19201A", border: `2px solid #483438`,
-            boxShadow: "3px 3px 0 #0A0D0A", padding: "16px 16px", marginBottom: 10,
+            background: "#FFFFFF", border: "2.5px solid #000000",
+            borderRadius: 20, boxShadow: "5px 5px 0px #000000",
+            padding: "18px 20px", marginBottom: 10,
           }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <div style={{ fontFamily: PX, fontSize: 8, color: PINK, letterSpacing: "0.04em" }}>
-              🍂 TỪ CẦN CHỦ Ý (HAY QUÊN)
-            </div>
+            <div style={{ fontSize: 16, fontWeight: 900, color: "#000000" }}>🔥 Từ hay quên nhất</div>
             <Link href="/vocabulary" style={{
-              fontFamily: PX, fontSize: 7, color: GREEN,
-              textDecoration: "none", letterSpacing: "0.04em",
+              fontSize: 12, fontWeight: 800, color: "#000000", textDecoration: "none",
+              padding: "4px 10px", borderRadius: 99, background: "#FFE052", border: "2px solid #000",
+              boxShadow: "2px 2px 0 #000", display: "inline-flex", alignItems: "center", gap: 4,
             }}>
-              [XEM TẤT CẢ ▶]
+              Xem kho từ <ArrowRight size={12} strokeWidth={3} />
             </Link>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {hardWords.map((w, i) => {
               const acc = Math.round((w.correctCount / w.reviewCount) * 100);
               return (
                 <div key={w.id} style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "8px 4px",
-                  borderBottom: i < hardWords.length - 1 ? `1px solid #283329` : "none",
+                  padding: "10px 12px", border: "2px solid #000000", borderRadius: 12,
+                  background: i === 0 ? "#FFF9F0" : "#FFFFFF",
+                  boxShadow: "2px 2px 0 #000",
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontFamily: PX, fontSize: 8, color: "#6F876E", width: 14, textAlign: "right" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{
+                      width: 24, height: 24, borderRadius: 6, background: "#FF5964", color: "#FFF",
+                      border: "1.5px solid #000", fontWeight: 900, fontSize: 12,
+                      display: "flex", alignItems: "center", justifyContent: "center"
+                    }}>
                       {i + 1}
                     </span>
                     <div>
-                      <div style={{ fontFamily: PX, fontSize: 9, color: "#F4EBD9", marginBottom: 2 }}>{w.word}</div>
-                      <div style={{ fontFamily: VT, fontSize: 16, color: "#B0C4AF" }}>{w.meaning}</div>
+                      <div style={{ fontWeight: 900, fontSize: 15, color: "#000000" }}>{w.word}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#444444" }}>{w.meaning}</div>
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{
-                      fontFamily: PX, fontSize: 9,
-                      color: acc < 50 ? PINK : CYAN,
+                    <span style={{
+                      fontSize: 12, fontWeight: 900, padding: "3px 8px", borderRadius: 99,
+                      background: acc < 50 ? "#FF5964" : "#38E54D", color: acc < 50 ? "#FFF" : "#000",
+                      border: "1.5px solid #000", display: "inline-block"
                     }}>
                       {acc}%
-                    </div>
-                    <div style={{ fontFamily: VT, fontSize: 14, color: "#6F876E", marginTop: 1 }}>
+                    </span>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#666666", marginTop: 2 }}>
                       {w.reviewCount} lần ôn
                     </div>
                   </div>
@@ -341,9 +344,6 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      <style>{`
-        a { -webkit-tap-highlight-color: transparent; }
-      `}</style>
     </div>
   );
 }

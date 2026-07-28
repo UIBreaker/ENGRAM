@@ -1,30 +1,31 @@
 "use client";
 import { useEffect, useState, useMemo, useRef, CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon, Lightbulb, FileSpreadsheet, Upload, AlertCircle, CheckCircle2, Wrench, Copy, ChevronDown as ChevDown } from "lucide-react";
+import { Plus, Search, Trash2, Edit3, X, Check, BookOpen, ChevronDown, ChevronUp, Sparkles, Image as ImageIcon, Link as LinkIcon, Lightbulb, FileSpreadsheet, Upload, AlertCircle, CheckCircle2, Wrench, Copy, ChevronDown as ChevDown, Volume2 } from "lucide-react";
 import { getWords, addWord, deleteWord, updateWord } from "@/lib/db";
 import { Word, TopicTag, TOPIC_TAGS, TOPIC_EMOJI, suggestTopic } from "@/lib/types";
+import { speakWord } from "@/lib/audio";
 import * as XLSX from "xlsx";
 
 /* ── Topic config ── */
 type TC = { color: string; bg: string; border: string; dot: string };
 const TOPICS: Record<TopicTag, TC> = {
-  "Công việc":  { color: "#93C5FD", bg: "rgba(96,165,250,0.12)",   border: "rgba(96,165,250,0.28)",   dot: "#60A5FA" },
-  "Lập trình":  { color: "#6EE7B7", bg: "rgba(52,211,153,0.12)",   border: "rgba(52,211,153,0.28)",   dot: "#34D399" },
-  "Đời sống":   { color: "#C4B5FD", bg: "rgba(167,139,250,0.12)",  border: "rgba(167,139,250,0.28)",  dot: "#A78BFA" },
-  "Du lịch":    { color: "#FCD34D", bg: "rgba(251,191,36,0.12)",   border: "rgba(251,191,36,0.28)",   dot: "#FBBF24" },
-  "Học thuật":  { color: "#FCA88A", bg: "rgba(249,115,22,0.12)",   border: "rgba(249,115,22,0.28)",   dot: "#F97316" },
-  "Sức khỏe":   { color: "#86EFAC", bg: "rgba(74,222,128,0.10)",   border: "rgba(74,222,128,0.25)",   dot: "#4ADE80" },
-  "Ẩm thực":    { color: "#FCA5A5", bg: "rgba(252,165,165,0.10)",  border: "rgba(252,165,165,0.25)",  dot: "#F87171" },
-  "Thể thao":   { color: "#67E8F9", bg: "rgba(103,232,249,0.10)",  border: "rgba(103,232,249,0.25)",  dot: "#22D3EE" },
-  "Kinh tế":    { color: "#6EE7B7", bg: "rgba(52,211,153,0.08)",   border: "rgba(52,211,153,0.22)",   dot: "#10B981" },
-  "Nghệ thuật": { color: "#F9A8D4", bg: "rgba(249,168,212,0.10)",  border: "rgba(249,168,212,0.25)",  dot: "#EC4899" },
-  "Khoa học":   { color: "#A5B4FC", bg: "rgba(165,180,252,0.10)",  border: "rgba(165,180,252,0.25)",  dot: "#818CF8" },
-  "Môi trường": { color: "#BEF264", bg: "rgba(190,242,100,0.10)",  border: "rgba(190,242,100,0.22)",  dot: "#84CC16" },
-  "Cảm xúc":    { color: "#FDA4AF", bg: "rgba(253,164,175,0.10)",  border: "rgba(253,164,175,0.25)",  dot: "#FB7185" },
-  "Giao tiếp":  { color: "#93C5FD", bg: "rgba(147,197,253,0.10)",  border: "rgba(147,197,253,0.22)",  dot: "#38BDF8" },
-  "Thành ngữ":  { color: "#FDE68A", bg: "rgba(253,230,138,0.10)",  border: "rgba(253,230,138,0.22)",  dot: "#FBBF24" },
-  "Khác":       { color: "#CBD5E1", bg: "rgba(148,163,184,0.08)",  border: "rgba(148,163,184,0.18)",  dot: "#94A3B8" },
+  "Công việc":  { color: "#000000", bg: "#9C8EFA", border: "#000000", dot: "#000000" },
+  "Lập trình":  { color: "#000000", bg: "#38E54D", border: "#000000", dot: "#000000" },
+  "Đời sống":   { color: "#000000", bg: "#FFE052", border: "#000000", dot: "#000000" },
+  "Du lịch":    { color: "#000000", bg: "#FF8E53", border: "#000000", dot: "#000000" },
+  "Học thuật":  { color: "#000000", bg: "#4ECCD3", border: "#000000", dot: "#000000" },
+  "Sức khỏe":   { color: "#000000", bg: "#38E54D", border: "#000000", dot: "#000000" },
+  "Ẩm thực":    { color: "#FFFFFF", bg: "#FF5964", border: "#000000", dot: "#000000" },
+  "Thể thao":   { color: "#000000", bg: "#4ECCD3", border: "#000000", dot: "#000000" },
+  "Kinh tế":    { color: "#000000", bg: "#FFE052", border: "#000000", dot: "#000000" },
+  "Nghệ thuật": { color: "#FFFFFF", bg: "#FF70A6", border: "#000000", dot: "#000000" },
+  "Khoa học":   { color: "#000000", bg: "#9C8EFA", border: "#000000", dot: "#000000" },
+  "Môi trường": { color: "#000000", bg: "#38E54D", border: "#000000", dot: "#000000" },
+  "Cảm xúc":    { color: "#FFFFFF", bg: "#FF5964", border: "#000000", dot: "#000000" },
+  "Giao tiếp":  { color: "#000000", bg: "#4ECCD3", border: "#000000", dot: "#000000" },
+  "Thành ngữ":  { color: "#000000", bg: "#FFE052", border: "#000000", dot: "#000000" },
+  "Khác":       { color: "#000000", bg: "#EFEFEF", border: "#000000", dot: "#000000" },
 };
 
 const DIFF       = ["Mới","Đang học","Tạm nhớ","Khá thuộc","Thuộc","Rất thuộc"];
@@ -333,13 +334,18 @@ function DetailModal({ word, onClose, onDelete, onUpdate }: {
               ? <input value={f.word} onChange={e=>setF({...f,word:e.target.value})}
                   style={{ fontSize:24, fontWeight:800, background:"transparent",
                     borderBottom:"2px solid #7B68EE", outline:"none", color:"var(--text-1)", width:"100%" }} />
-              : <div style={{ fontSize:24, fontWeight:800, color:"var(--text-1)" }}>{word.word}</div>}
+              : <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ fontSize:24, fontWeight:800, color:"var(--text-1)" }}>{word.word}</div>
+                  <button onClick={(e) => speakWord(word.word, e)} className="btn btn-ghost" style={{ padding: "6px 10px", color: "#65D376", border: "1px solid #364638", background: "#161E17" }} title="Phát âm tiếng Anh">
+                    <Volume2 size={16} /> <span style={{ fontSize: 12 }}>Nghe</span>
+                  </button>
+                </div>}
             {editing
               ? <input value={f.phonetics} onChange={e=>setF({...f,phonetics:e.target.value})}
                   style={{ fontSize:13, color:"var(--text-3)", fontFamily:"monospace", background:"transparent",
                     border:"none", borderBottom:"1px solid var(--border)", outline:"none", marginTop:4 }} />
-              : <div style={{ fontSize:13, color:"var(--text-3)", fontFamily:"monospace", marginTop:4 }}>
-                  {word.phonetics}
+              : <div onClick={(e) => speakWord(word.word, e)} title="Click để nghe phát âm" style={{ fontSize:13, color:"var(--text-3)", fontFamily:"monospace", marginTop:4, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  {word.phonetics} <Volume2 size={13} color="#65D376" />
                 </div>}
           </div>
           <button onClick={onClose} className="btn btn-ghost" style={{ marginLeft:8 }}><X size={17} /></button>
@@ -1684,8 +1690,10 @@ export default function VocabularyPage() {
                 </span>
               </div>
 
-              <span style={{ fontSize:12, fontFamily:"monospace", color:"var(--text-3)", overflow:"hidden", textOverflow:"ellipsis" }}>
-                {w.phonetics}
+              <span onClick={(e) => { e.stopPropagation(); speakWord(w.word, e); }}
+                title="Bấm để nghe phát âm"
+                style={{ fontSize:12, fontFamily:"monospace", color:"var(--text-3)", overflow:"hidden", textOverflow:"ellipsis", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                {w.phonetics} <Volume2 size={12} color="#65D376" />
               </span>
               <span style={{ fontSize:13, color:"var(--text-2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {w.meaning}
@@ -1697,6 +1705,9 @@ export default function VocabularyPage() {
               </span>
 
               <div style={{ display:"flex", gap:4, justifyContent:"flex-end" }} className="row-actions">
+                <button onClick={e => { e.stopPropagation(); speakWord(w.word, e); }} className="btn btn-ghost" style={{ padding: 6, color: "#65D376" }} title="Phát âm">
+                  <Volume2 size={14} />
+                </button>
                 <button onClick={e=>{e.stopPropagation();setSelected(w);}} className="btn btn-ghost" style={{padding:6}}>
                   <Edit3 size={13}/>
                 </button>
