@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --no-turbo",
-    "dev:turbo": "next dev",
+    "predev": "cmd /c \"rmdir /s /q .next\\dev\\cache 2>NUL || exit 0\"",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
