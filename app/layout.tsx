@@ -5,7 +5,7 @@ import ClientLayout from "@/components/layout/ClientLayout";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--font-inter",
   display: "swap",
 });
@@ -37,13 +37,28 @@ export const metadata: Metadata = {
   },
 };
 
+// Inline script runs BEFORE React hydrates → zero flash of wrong theme
+const themeScript = `
+(function(){
+  try {
+    var t = localStorage.getItem('engram_theme');
+    var d = t === 'dark' || t === 'light'
+      ? t
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', d);
+  } catch(e) {}
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className={`${inter.variable} ${pressStart2P.variable}`}>
+    <html lang="vi" className={`${inter.variable} ${pressStart2P.variable}`} suppressHydrationWarning>
       <head>
+        {/* Theme script must run before ANY render to prevent flash */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="preconnect" href="https://zpqrvnlbldhbpnakozhy.supabase.co" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

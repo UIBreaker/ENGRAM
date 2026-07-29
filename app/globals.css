@@ -1,12 +1,16 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════
-   ENGRAM — Neo-Brutalism UI Design System
+   ENGRAM — Neo-Brutalism UI Design System v2
    Bold Black Outlines · Hard Drop Shadows · Vibrant Pastels
+   Full Light/Dark Mode · Smooth Transitions
 ═══════════════════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ══════════════════════════════════════
+   LIGHT MODE (Default)
+══════════════════════════════════════ */
 :root {
   /* ── Backgrounds (Warm Neubrutalism Cream) ── */
   --bg:          #F5EFE6;
@@ -24,7 +28,7 @@
   --neo-orange:  #FF8E53;
   --neo-pink:    #FF70A6;
 
-  /* ── Backward Compatibility Variables ── */
+  /* ── Backward Compatibility ── */
   --brand:       var(--neo-purple);
   --brand-soft:  #BDB2FE;
   --brand-dim:   rgba(156,142,250,0.18);
@@ -38,25 +42,25 @@
   --pink:        var(--neo-pink);
   --pink-dim:    rgba(255,112,166,0.18);
 
-  /* ── High Contrast Text ── */
-  --text-1: #000000;   /* Pure Black */
-  --text-2: #2D2D2D;   /* Dark Charcoal */
-  --text-3: #555555;   /* Medium Gray */
-  --text-4: #888888;   /* Muted Gray */
+  /* ── Text ── */
+  --text-1: #000000;
+  --text-2: #2D2D2D;
+  --text-3: #555555;
+  --text-4: #888888;
 
-  /* ── Borders & Frames (Neo-Brutalism Heavy Outlines) ── */
+  /* ── Borders & Frames ── */
   --border:     #000000;
   --border-med: #000000;
   --border-hi:  #000000;
 
   /* ── Neo-Brutalism Borders & Shadows ── */
-  --neo-border: 2.5px solid #000000;
-  --neo-shadow: 4px 4px 0px #000000;
-  --neo-shadow-sm: 2.5px 2.5px 0px #000000;
-  --neo-shadow-lg: 6px 6px 0px #000000;
+  --neo-border:     2.5px solid #000000;
+  --neo-shadow:     4px 4px 0px #000000;
+  --neo-shadow-sm:  2.5px 2.5px 0px #000000;
+  --neo-shadow-lg:  6px 6px 0px #000000;
   --neo-shadow-brand: 4px 4px 0px #000000;
 
-  /* ── Border Radius (Neubrutal Rounded) ── */
+  /* ── Border Radius ── */
   --r-sm:  8px;
   --r-md:  12px;
   --r-lg:  16px;
@@ -71,65 +75,72 @@
   /* ── Touch ── */
   --touch-min: 44px;
 
-  /* ── Theme-aware card & surface ── */
-  --card-bg:    #FFFFFF;
-  --surface-bg: #F5EFE6;
-  --sidebar-bg: #F5EFE6;
-  --input-bg:   #FFFFFF;
-  --input-text: #000000;
-  --card-text:  #000000;
+  /* ── Theme-aware surfaces ── */
+  --card-bg:      #FFFFFF;
+  --surface-bg:   #F5EFE6;
+  --sidebar-bg:   #F5EFE6;
+  --input-bg:     #FFFFFF;
+  --input-text:   #000000;
+  --card-text:    #000000;
   --border-color: #000000;
   --shadow-color: #000000;
-  --dot-color: rgba(0,0,0,0.06);
+  --dot-color:    rgba(0,0,0,0.055);
   --scrollbar-track: #F5EFE6;
   --scrollbar-thumb: #FFE052;
+
+  /* ── Transition speed ── */
+  --t-fast:  0.08s ease;
+  --t-base:  0.2s ease;
+  --t-slow:  0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ══════════════════════════════════════
    DARK MODE — Neo-Brutalism Night
-   Deep indigo base · Glow shadows · Bright pastels
+   Deep charcoal base · Neon glow borders · Bright pastels
 ══════════════════════════════════════ */
 [data-theme="dark"] {
   /* Backgrounds */
-  --bg:          #0F0F1A;
-  --bg-base:     #0F0F1A;
-  --bg-surface:  #1A1A2E;
-  --bg-raised:   #1E1E35;
-  --bg-overlay:  #16162A;
+  --bg:          #111118;
+  --bg-base:     #111118;
+  --bg-surface:  #1A1A28;
+  --bg-raised:   #212132;
+  --bg-overlay:  #18182A;
 
   /* Text */
-  --text-1: #F0EFF8;
-  --text-2: #C9C8DC;
-  --text-3: #9898B8;
-  --text-4: #6A6A88;
+  --text-1: #F2F1FF;
+  --text-2: #C8C7E0;
+  --text-3: #9190B0;
+  --text-4: #636280;
 
-  /* Borders — softened for dark */
-  --border:     rgba(255,255,255,0.2);
-  --border-med: rgba(255,255,255,0.2);
-  --border-hi:  rgba(255,255,255,0.3);
+  /* Borders — neon-tinged for dark mode */
+  --border:     rgba(255,255,255,0.18);
+  --border-med: rgba(255,255,255,0.18);
+  --border-hi:  rgba(255,255,255,0.28);
 
-  /* Neo-Brutalism Dark Shadows — colored glow */
-  --neo-border:     2.5px solid rgba(255,255,255,0.22);
-  --neo-shadow:     4px 4px 0px rgba(255,255,255,0.12);
-  --neo-shadow-sm:  2.5px 2.5px 0px rgba(255,255,255,0.1);
-  --neo-shadow-lg:  6px 6px 0px rgba(255,255,255,0.14);
-  --neo-shadow-brand: 4px 4px 0px rgba(156,142,250,0.4);
+  /* Shadows — glowing colored halos in dark */
+  --neo-border:       2.5px solid rgba(255,255,255,0.18);
+  --neo-shadow:       4px 4px 0px rgba(156,142,250,0.25);
+  --neo-shadow-sm:    2.5px 2.5px 0px rgba(156,142,250,0.18);
+  --neo-shadow-lg:    6px 6px 0px rgba(156,142,250,0.3);
+  --neo-shadow-brand: 4px 4px 0px rgba(156,142,250,0.45);
 
   /* Theme-aware surfaces */
-  --card-bg:    #1E1E35;
-  --surface-bg: #0F0F1A;
-  --sidebar-bg: #14142A;
-  --input-bg:   #1A1A2E;
-  --input-text: #F0EFF8;
-  --card-text:  #F0EFF8;
-  --border-color: rgba(255,255,255,0.2);
-  --shadow-color: rgba(255,255,255,0.12);
-  --dot-color: rgba(255,255,255,0.04);
-  --scrollbar-track: #1A1A2E;
+  --card-bg:      #212132;
+  --surface-bg:   #111118;
+  --sidebar-bg:   #16161F;
+  --input-bg:     #1A1A28;
+  --input-text:   #F2F1FF;
+  --card-text:    #F2F1FF;
+  --border-color: rgba(255,255,255,0.18);
+  --shadow-color: rgba(156,142,250,0.25);
+  --dot-color:    rgba(255,255,255,0.035);
+  --scrollbar-track: #1A1A28;
   --scrollbar-thumb: #9C8EFA;
 }
 
-/* ── HTML/Body ── */
+/* ══════════════════════════════════════
+   HTML / BODY
+══════════════════════════════════════ */
 html {
   height: 100%;
   scroll-behavior: auto;
@@ -146,50 +157,48 @@ body {
   min-height: 100dvh;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
-  transition: background 0.25s ease, color 0.25s ease;
-  /* Confetti dot background */
-  background-image:
-    radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+  transition: background var(--t-base), color var(--t-base);
+  background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
   background-size: 20px 20px;
 }
 
 /* ══════════════════════════════════════
-   TYPOGRAPHY HIERARCHY
+   TYPOGRAPHY
 ══════════════════════════════════════ */
-h1 { font-size: 24px; font-weight: 900; line-height: 1.25; color: #000000; letter-spacing: -0.02em; }
-h2 { font-size: 19px; font-weight: 800; line-height: 1.3; color: #000000; letter-spacing: -0.01em; }
-h3 { font-size: 16px; font-weight: 800; line-height: 1.35; color: #000000; }
-h4 { font-size: 14px; font-weight: 700; line-height: 1.4; color: #000000; }
-p  { font-size: 14px; line-height: 1.5; color: var(--text-2); }
+h1 { font-size: 24px; font-weight: 900; line-height: 1.25; color: var(--text-1); letter-spacing: -0.02em; }
+h2 { font-size: 19px; font-weight: 800; line-height: 1.3;  color: var(--text-1); letter-spacing: -0.01em; }
+h3 { font-size: 16px; font-weight: 800; line-height: 1.35; color: var(--text-1); }
+h4 { font-size: 14px; font-weight: 700; line-height: 1.4;  color: var(--text-1); }
+p  { font-size: 14px; line-height: 1.5;  color: var(--text-2); }
 small, .text-sub { font-size: 12px; line-height: 1.4; color: var(--text-3); }
 
-/* ── Custom Neo-Brutalism Scrollbar ── */
+/* ── Scrollbar ── */
 @media (hover: hover) {
-  ::-webkit-scrollbar              { width: 9px; }
-  ::-webkit-scrollbar-track        { background: var(--scrollbar-track); border-left: 2.5px solid var(--border-color); }
-  ::-webkit-scrollbar-thumb        { background: var(--scrollbar-thumb); border: 2.5px solid var(--border-color); border-radius: 4px; }
+  ::-webkit-scrollbar              { width: 8px; }
+  ::-webkit-scrollbar-track        { background: var(--scrollbar-track); border-left: 2px solid var(--border-color); }
+  ::-webkit-scrollbar-thumb        { background: var(--scrollbar-thumb); border: 2px solid var(--border-color); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover  { background: #FF5964; }
 }
 
 /* ── Focus ── */
-:focus-visible        { outline: 3px solid #000000; outline-offset: 2px; }
+:focus-visible             { outline: 3px solid var(--neo-purple); outline-offset: 2px; border-radius: 4px; }
 :focus:not(:focus-visible) { outline: none; }
 
 /* ══════════════════════════════════════
    NEO-BRUTALISM COMPONENTS
 ══════════════════════════════════════ */
 
-/* Card — theme-aware, 2.5px border, hard drop shadow */
+/* ── Card ── */
 .card {
   background: var(--card-bg);
   border: 2.5px solid var(--border-color);
   border-radius: var(--r-md);
   box-shadow: var(--neo-shadow);
   color: var(--card-text);
-  transition: background 0.25s ease, border-color 0.25s ease;
+  transition: background var(--t-base), border-color var(--t-base), box-shadow var(--t-base), color var(--t-base);
 }
 
-/* ── Neo-Brutalism Buttons ── */
+/* ── Buttons ── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -199,7 +208,7 @@ small, .text-sub { font-size: 12px; line-height: 1.4; color: var(--text-3); }
   font-size: 14px;
   font-family: var(--font-inter), system-ui, sans-serif;
   border-radius: var(--r-md);
-  border: 2.5px solid #000000;
+  border: 2.5px solid var(--border-color);
   cursor: pointer;
   white-space: nowrap;
   user-select: none;
@@ -208,54 +217,54 @@ small, .text-sub { font-size: 12px; line-height: 1.4; color: var(--text-3); }
   line-height: 1.2;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 4px 4px 0px #000000;
-  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+  box-shadow: var(--neo-shadow);
+  transition:
+    transform var(--t-fast),
+    box-shadow var(--t-fast),
+    background var(--t-base),
+    border-color var(--t-base),
+    color var(--t-base);
   position: relative;
-  color: #000000;
+  color: var(--text-1);
 }
 
 .btn:active {
   transform: translate(3px, 3px) !important;
-  box-shadow: 1px 1px 0px #000000 !important;
+  box-shadow: 1px 1px 0px var(--shadow-color) !important;
 }
 
 @media (hover: hover) {
   .btn:hover {
     transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px #000000;
+    box-shadow: 6px 6px 0px var(--shadow-color);
   }
 }
 
 .btn-primary {
   background: var(--neo-red);
   color: #FFFFFF;
-  text-shadow: 1px 1px 0 #000;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  border-color: var(--border-color);
 }
 
 .btn-secondary {
   background: var(--card-bg);
   color: var(--card-text);
+  border-color: var(--border-color);
 }
 
 .btn-ghost {
   background: transparent;
-  color: #000000;
+  color: var(--text-2);
   border-color: transparent;
   box-shadow: none;
   padding: 8px;
 }
 
-.btn-danger {
-  background: var(--neo-red);
-  color: #FFFFFF;
-}
+.btn-danger  { background: var(--neo-red);   color: #FFFFFF; }
+.btn-success { background: var(--neo-green);  color: #000000; }
 
-.btn-success {
-  background: var(--neo-green);
-  color: #000000;
-}
-
-/* ── Neo-Brutalism Inputs ── */
+/* ── Inputs ── */
 .input {
   width: 100%;
   background: var(--input-bg);
@@ -268,14 +277,20 @@ small, .text-sub { font-size: 12px; line-height: 1.4; color: var(--text-3); }
   padding: 11px 15px;
   outline: none;
   box-shadow: 3px 3px 0px var(--shadow-color);
-  transition: box-shadow 0.1s ease, transform 0.1s ease, background 0.25s ease;
+  transition:
+    box-shadow var(--t-fast),
+    transform var(--t-fast),
+    background var(--t-base),
+    border-color var(--t-base),
+    color var(--t-base);
   -webkit-appearance: none;
   appearance: none;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 .input:focus {
-  box-shadow: 5px 5px 0px var(--shadow-color);
+  box-shadow: 5px 5px 0px var(--neo-purple);
+  border-color: var(--neo-purple);
   transform: translate(-1px, -1px);
 }
 .input::placeholder { color: var(--text-4); font-weight: 500; }
@@ -284,7 +299,7 @@ textarea.input { resize: vertical; min-height: 100px; font-size: 15px; }
 /* ── Select ── */
 select.input {
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 16px;
@@ -292,7 +307,7 @@ select.input {
 }
 select.input option { background: var(--input-bg); color: var(--input-text); }
 
-/* ── Neo-Brutalism Pill Badges ── */
+/* ── Pill Badges ── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -301,25 +316,63 @@ select.input option { background: var(--input-bg); color: var(--input-text); }
   border-radius: 99px;
   font-size: 12px;
   font-weight: 800;
-  border: 2px solid #000000;
-  box-shadow: 2px 2px 0px #000000;
-  color: #000000;
+  border: 2px solid var(--border-color);
+  box-shadow: 2px 2px 0px var(--shadow-color);
+  color: var(--card-text);
+  background: var(--card-bg);
+  transition: background var(--t-base), border-color var(--t-base);
 }
 
-/* ── Neo-Brutalism Glass (Solid Cream White + Heavy Shadow) ── */
+/* ── Glass (theme-aware) ── */
 .glass {
-  background: #FFFFFF;
-  border: 2.5px solid #000000;
+  background: var(--card-bg);
+  border: 2.5px solid var(--border-color);
   box-shadow: var(--neo-shadow);
+}
+
+/* ══════════════════════════════════════
+   THEME TOGGLE SWITCH (pill style)
+══════════════════════════════════════ */
+.theme-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 52px;
+  height: 28px;
+  border-radius: 99px;
+  border: 2.5px solid var(--border-color);
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: background var(--t-base), border-color var(--t-base);
+  box-shadow: 2px 2px 0 var(--shadow-color);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.theme-switch-thumb {
+  position: absolute;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--neo-yellow);
+  border: 2px solid var(--border-color);
+  transition: transform var(--t-base), background var(--t-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+[data-theme="dark"] .theme-switch-thumb {
+  transform: translateX(24px);
+  background: var(--neo-purple);
 }
 
 /* ══════════════════════════════════════
    FLIP CARD
 ══════════════════════════════════════ */
-.flip-scene {
-  perspective: 1200px;
-  isolation: isolate;
-}
+.flip-scene { perspective: 1200px; isolation: isolate; }
 .flip-inner {
   position: relative;
   width: 100%; height: 100%;
@@ -339,7 +392,7 @@ select.input option { background: var(--input-bg); color: var(--input-text); }
 /* ══════════════════════════════════════
    MOBILE SAFE AREA & RESPONSIVE
 ══════════════════════════════════════ */
-.pb-nav  { padding-bottom: max(76px, calc(60px + env(safe-area-inset-bottom))); }
+.pb-nav  { padding-bottom: max(80px, calc(64px + env(safe-area-inset-bottom))); }
 .pb-safe { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
 
 @media (min-width: 768px) {
@@ -355,7 +408,7 @@ select.input option { background: var(--input-bg); color: var(--input-text); }
     position: fixed !important;
     bottom: 0 !important; left: 0 !important; right: 0 !important; top: auto !important;
     border-radius: var(--r-xl) var(--r-xl) 0 0 !important;
-    border-top: 3px solid #000000 !important;
+    border-top: 3px solid var(--border-color) !important;
     max-height: 92dvh;
     overflow-y: auto;
     padding-bottom: max(24px, env(safe-area-inset-bottom));

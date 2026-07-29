@@ -1,63 +1,69 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, BrainCircuit, Target, Trophy, Sun, Moon } from "lucide-react";
+import { Home, BookOpen, BrainCircuit, Target, Trophy } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 
 const nav = [
-  { href: "/",            icon: Home,         label: "Trang chủ", color: "#FF5964" },
-  { href: "/vocabulary",  icon: BookOpen,      label: "Từ vựng",   color: "#FFE052" },
-  { href: "/flashcard",   icon: BrainCircuit,  label: "Ôn tập",    color: "#9C8EFA" },
-  { href: "/practice",    icon: Target,        label: "Luyện tập", color: "#4ECCD3" },
-  { href: "/leaderboard", icon: Trophy,        label: "Bảng Hạng", color: "#FF70A6" },
+  { href: "/",            icon: Home,         label: "Home",    color: "#FF5964" },
+  { href: "/vocabulary",  icon: BookOpen,      label: "Từ vựng", color: "#FFE052" },
+  { href: "/flashcard",   icon: BrainCircuit,  label: "Ôn tập",  color: "#9C8EFA" },
+  { href: "/practice",    icon: Target,        label: "Luyện",   color: "#4ECCD3" },
+  { href: "/leaderboard", icon: Trophy,        label: "Hạng",    color: "#FF70A6" },
 ];
 
 export default function BottomNav() {
   const path = usePathname();
-  const { toggle, isDark } = useTheme();
+  const { toggle, isDark, mounted } = useTheme();
+
   return (
     <>
       <style>{`
         @media (min-width: 768px) { .bottom-nav { display: none !important; } }
-        .nav-item { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-        .nav-item:active { transform: translateY(2px); }
+        .bnav-item { -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none; }
+        .bnav-item:active { transform: translateY(2px); }
       `}</style>
+
       <nav className="bottom-nav" style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
         background: "var(--sidebar-bg)",
         borderTop: "2.5px solid var(--border-color)",
-        boxShadow: "0 -3px 0 var(--border-color)",
         display: "flex",
         paddingBottom: "env(safe-area-inset-bottom)",
-        paddingTop: 4,
-        transition: "background 0.25s ease, border-color 0.25s ease",
+        paddingTop: 2,
+        transition: "background 0.2s ease, border-color 0.2s ease",
       }}>
+
         {nav.map(({ href, icon: Icon, label, color }) => {
           const active = href === "/" ? path === "/" : path.startsWith(href);
           return (
-            <Link key={href} href={href} className="nav-item" style={{
+            <Link key={href} href={href} className="bnav-item" style={{
               flex: 1, display: "flex", flexDirection: "column",
-              alignItems: "center", gap: 3,
-              padding: "8px 4px 10px",
+              alignItems: "center", gap: 2,
+              padding: "6px 2px 9px",
               textDecoration: "none",
+              transition: "opacity 0.1s ease",
             }}>
               <div style={{
-                padding: "4px 14px",
+                padding: "5px 12px",
                 borderRadius: 99,
                 background: active ? color : "transparent",
-                border: active ? "2px solid var(--border-color)" : "2px solid transparent",
+                border: `2px solid ${active ? "var(--border-color)" : "transparent"}`,
                 boxShadow: active ? "2px 2px 0 var(--border-color)" : "none",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "border-color 0.25s ease",
+                transition: "background 0.15s ease, border-color 0.2s ease, box-shadow 0.15s ease",
               }}>
-                <Icon size={18} color={active ? "#000000" : "var(--text-2)"} strokeWidth={active ? 2.8 : 2} />
+                <Icon
+                  size={17}
+                  color={active ? "#000000" : "var(--text-3)"}
+                  strokeWidth={active ? 3 : 2}
+                />
               </div>
               <span style={{
-                fontSize: 10,
-                fontFamily: "var(--font-inter), sans-serif",
-                fontWeight: active ? 800 : 600,
-                color: active ? "var(--text-1)" : "var(--text-3)",
-                lineHeight: 1,
+                fontSize: 9.5, fontWeight: active ? 900 : 600,
+                color: active ? "var(--text-1)" : "var(--text-4)",
+                lineHeight: 1, letterSpacing: "0.01em",
+                transition: "color 0.15s ease",
               }}>
                 {label}
               </span>
@@ -65,29 +71,28 @@ export default function BottomNav() {
           );
         })}
 
-        {/* Theme Toggle */}
-        <button onClick={toggle} className="nav-item" style={{
+        {/* ─ Theme Toggle ─ */}
+        <button onClick={toggle} className="bnav-item" style={{
           flex: 1, display: "flex", flexDirection: "column",
-          alignItems: "center", gap: 3,
-          padding: "8px 4px 10px",
+          alignItems: "center", gap: 2,
+          padding: "6px 2px 9px",
           background: "transparent", border: "none", cursor: "pointer",
         }}>
           <div style={{
-            padding: "4px 14px", borderRadius: 99,
-            background: "transparent",
-            border: "2px solid transparent",
+            padding: "5px 12px", borderRadius: 99,
+            background: "transparent", border: "2px solid transparent",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            {isDark
-              ? <Sun size={18} color="var(--text-2)" strokeWidth={2} />
-              : <Moon size={18} color="var(--text-2)" strokeWidth={2} />
-            }
+            <span style={{ fontSize: 17, fontFamily: "sans-serif, Apple Color Emoji, Segoe UI Emoji", lineHeight: 1 }}>
+              {mounted ? (isDark ? "☀️" : "🌙") : "🌙"}
+            </span>
           </div>
           <span style={{
-            fontSize: 10, fontFamily: "var(--font-inter), sans-serif",
-            fontWeight: 600, color: "var(--text-3)", lineHeight: 1,
+            fontSize: 9.5, fontWeight: 600,
+            color: "var(--text-4)", lineHeight: 1,
+            transition: "color 0.15s ease",
           }}>
-            {isDark ? "Sáng" : "Tối"}
+            {mounted ? (isDark ? "Sáng" : "Tối") : "Tối"}
           </span>
         </button>
       </nav>

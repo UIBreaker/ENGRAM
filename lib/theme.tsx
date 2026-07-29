@@ -7,47 +7,40 @@ interface ThemeContextValue {
   theme: Theme;
   toggle: () => void;
   isDark: boolean;
+  mounted: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: "light",
   toggle: () => {},
   isDark: false,
+  mounted: false,
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
+  const [mounted, setMounted] = useState(false);
 
-  // On mount: read saved preference or system preference
   useEffect(() => {
-    const saved = localStorage.getItem("engram_theme") as Theme | null;
-    if (saved === "dark" || saved === "light") {
-      applyTheme(saved);
-      setTheme(saved);
-    } else {
-      // Use system preference as default
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const initial: Theme = prefersDark ? "dark" : "light";
-      applyTheme(initial);
-      setTheme(initial);
+    // Read from the data-theme attribute already set by inline script
+    const current = document.documentElement.getAttribute("data-theme") as Theme;
+    if (current === "dark" || current === "light") {
+      setTheme(current);
     }
+    setMounted(true);
   }, []);
-
-  function applyTheme(t: Theme) {
-    document.documentElement.setAttribute("data-theme", t);
-    localStorage.setItem("engram_theme", t);
-  }
 
   function toggle() {
     setTheme(prev => {
       const next: Theme = prev === "light" ? "dark" : "light";
-      applyTheme(next);
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("engram_theme", next); } catch {}
       return next;
     });
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggle, isDark: theme === "dark" }}>
+    <ThemeContext.Provider value={{ theme, toggle, isDark: theme === "dark", mounted }}>
       {children}
     </ThemeContext.Provider>
   );
