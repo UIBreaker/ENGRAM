@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Press_Start_2P } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import ClientLayout from "@/components/layout/ClientLayout";
 
@@ -59,8 +60,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" className={`${inter.variable} ${pressStart2P.variable}`} suppressHydrationWarning>
       <head>
-        {/* Theme script must run before ANY render to prevent flash */}
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script
+          id="theme-script"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
         <link rel="preconnect" href="https://zpqrvnlbldhbpnakozhy.supabase.co" />
       </head>
       <body suppressHydrationWarning>
