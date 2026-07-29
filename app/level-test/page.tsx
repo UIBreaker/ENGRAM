@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { pageVariants, containerVariants, cardVariants, slideUpVariants, fadeVariants } from "@/lib/animations";
 import { Award, ChevronRight, Clock, ShieldAlert, Sparkles, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { getGamificationState, saveGamificationState } from "@/lib/gamification";
@@ -90,16 +91,30 @@ export default function LevelTestPage() {
     return CEFR_LEVELS[5];
   };
 
+  function AnimatedNumber({ value, prefix = "" }: { value: number; prefix?: string }) {
+    const [current, setCurrent] = useState(0);
+    useEffect(() => {
+      const controls = animate(0, value, {
+        duration: 1.2,
+        ease: [0.25, 0.46, 0.45, 0.94],
+        onUpdate(v) { setCurrent(Math.round(v)); }
+      });
+      return () => controls.stop();
+    }, [value]);
+    return <>{prefix}{current}</>;
+  }
+
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <motion.div variants={pageVariants} initial="hidden" animate="visible" exit="exit" style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <AnimatePresence mode="wait">
         
         {phase === "intro" && (
           <motion.div
             key="intro"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, x: -50 }}
+            variants={fadeVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             style={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}
           >
             <ShieldAlert size={64} style={{ margin: "0 auto 1rem", color: "#9C8EFA" }} />
@@ -108,14 +123,14 @@ export default function LevelTestPage() {
               Làm bài test 20 câu để xác định trình độ từ vựng CEFR của bạn và nhận lộ trình học phù hợp.
             </p>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "1rem", marginBottom: "3rem" }}>
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "1rem", marginBottom: "3rem" }}>
               {CEFR_LEVELS.map(level => (
-                <div key={level.level} className="card" style={{ padding: "1rem", textAlign: "center" }}>
+                <motion.div variants={cardVariants} whileHover={{ y: -2, boxShadow: "var(--neo-shadow-lg)" }} key={level.level} className="card" style={{ padding: "1rem", textAlign: "center", backgroundColor: "var(--card-bg)" }}>
                   <div style={{ fontSize: "1.5rem", fontWeight: "900", color: level.color }}>{level.level}</div>
                   <div style={{ fontSize: "0.85rem", color: "var(--text-2)" }}>{level.desc}</div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             <button 
               className="btn btn-primary" 
@@ -133,19 +148,30 @@ export default function LevelTestPage() {
         {phase === "quiz" && (
           <motion.div
             key="quiz"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
+            variants={fadeVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             style={{ flex: 1, display: "flex", flexDirection: "column" }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
               <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>Câu {currentQIndex + 1} / 20</div>
-              <div style={{ 
-                display: "flex", alignItems: "center", gap: "0.5rem", 
-                fontSize: "1.2rem", fontWeight: "bold",
-                color: timeLeft <= 5 ? "#FF5964" : "var(--text-1)"
-              }}>
-                <Clock /> {timeLeft}s
+              <div style={{ position: "relative", width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="48" height="48" viewBox="0 0 48 48" style={{ position: "absolute", top: 0, left: 0, transform: "rotate(-90deg)" }}>
+                  <circle cx="24" cy="24" r="20" fill="none" stroke="var(--border-color)" strokeWidth="4" />
+                  <motion.circle 
+                    cx="24" cy="24" r="20" fill="none" stroke={timeLeft <= 5 ? "#FF5964" : "#FFE052"} strokeWidth="4"
+                    strokeDasharray="125.6"
+                    animate={{ strokeDashoffset: 125.6 - (125.6 * timeLeft) / 15 }}
+                    transition={{ duration: 1, ease: "linear" }}
+                  />
+                </svg>
+                <div style={{ 
+                  fontSize: "1rem", fontWeight: "bold",
+                  color: timeLeft <= 5 ? "#FF5964" : "var(--text-1)"
+                }}>
+                  {timeLeft}
+                </div>
               </div>
             </div>
             
@@ -157,19 +183,31 @@ export default function LevelTestPage() {
               />
             </div>
 
-            <div className="card" style={{ padding: "3rem 2rem", marginBottom: "2rem", textAlign: "center", backgroundColor: "var(--card-bg)" }}>
-              <h2 style={{ fontSize: "1.8rem", fontWeight: "bold", margin: 0 }}>{QUESTIONS[currentQIndex].q}</h2>
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={currentQIndex}
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.2 }}
+                className="card" style={{ padding: "3rem 2rem", marginBottom: "2rem", textAlign: "center", backgroundColor: "var(--card-bg)" }}
+              >
+                <h2 style={{ fontSize: "1.8rem", fontWeight: "bold", margin: 0 }}>{QUESTIONS[currentQIndex].q}</h2>
+              </motion.div>
+            </AnimatePresence>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" key={`opts-${currentQIndex}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               {QUESTIONS[currentQIndex].options.map((opt, i) => (
-                <button
+                <motion.button
+                  variants={cardVariants}
                   key={i}
                   className="card"
                   onClick={() => {
                     setSelectedOption(i);
                     handleNext(i);
                   }}
+                  whileHover={{ y: -2, boxShadow: "var(--neo-shadow-lg)" }}
+                  whileTap={{ scale: 0.95 }}
                   style={{
                     padding: "1.5rem",
                     fontSize: "1.2rem",
@@ -178,21 +216,23 @@ export default function LevelTestPage() {
                     cursor: "pointer",
                     backgroundColor: selectedOption === i ? "#9C8EFA" : "var(--card-bg)",
                     color: selectedOption === i ? "#fff" : "var(--text-1)",
-                    transition: "transform 0.1s"
+                    transition: "transform 0.08s ease, box-shadow 0.08s ease"
                   }}
                 >
                   {String.fromCharCode(65 + i)}. {opt}
-                </button>
+                </motion.button>
               ))}
-            </div>
+            </motion.div>
           </motion.div>
         )}
 
         {phase === "results" && (
           <motion.div
             key="results"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+            variants={slideUpVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             style={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
           >
             <Sparkles size={64} style={{ color: "#FFE052", marginBottom: "1rem" }} />
@@ -206,11 +246,11 @@ export default function LevelTestPage() {
 
             <div style={{ display: "flex", gap: "2rem", marginBottom: "3rem" }}>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "2rem", fontWeight: "bold" }}>{score}/20</div>
+                <div style={{ fontSize: "2rem", fontWeight: "bold", color: "var(--text-1)" }}><AnimatedNumber value={score} /></div>
                 <div style={{ color: "var(--text-2)" }}>Câu đúng</div>
               </div>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#38E54D" }}>+{score * 10}</div>
+                <div style={{ fontSize: "2rem", fontWeight: "bold", color: "#38E54D" }}><AnimatedNumber value={score * 10} prefix="+" /></div>
                 <div style={{ color: "var(--text-2)" }}>XP Nhận được</div>
               </div>
             </div>
@@ -231,6 +271,6 @@ export default function LevelTestPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

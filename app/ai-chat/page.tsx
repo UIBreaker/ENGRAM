@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { pageVariants, containerVariants, cardVariants, slideUpVariants, popVariants, fadeVariants } from "@/lib/animations";
 import { Mic, Send, Bot, User, RotateCcw, MessageSquare, Briefcase, Map, Plane, CheckCircle2 } from "lucide-react";
 import { getGamificationState, saveGamificationState } from "@/lib/gamification";
 
@@ -175,7 +176,7 @@ export default function AIChatPage() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-80px)] max-h-[900px] bg-[var(--bg-base)] text-[var(--text-1)] font-sans p-4 gap-4 overflow-hidden flex-col md:flex-row">
+    <motion.div variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="flex h-[calc(100vh-80px)] max-h-[900px] bg-[var(--bg-base)] text-[var(--text-1)] font-sans p-4 gap-4 overflow-hidden flex-col md:flex-row">
       {/* Toast */}
       <AnimatePresence>
           {toast && (
@@ -198,12 +199,14 @@ export default function AIChatPage() {
         className="w-full md:w-[240px] flex-shrink-0 flex flex-col gap-3"
       >
         <h2 className="text-xl font-black uppercase mb-2 text-[var(--text-1)]">Chủ đề Giao Tiếp</h2>
-        <div className="flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 md:pb-0 hide-scrollbar flex-1">
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="flex flex-row md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 md:pb-0 hide-scrollbar flex-1">
             {scenarios.map(s => (
-            <button
+            <motion.button
+                variants={cardVariants}
                 key={s.id}
                 onClick={() => startScenario(s)}
                 className="flex-shrink-0 text-left p-3 rounded-lg font-bold transition-transform active:translate-x-[3px] active:translate-y-[3px]"
+                whileHover={{ y: -2, boxShadow: "var(--neo-shadow-lg)" }}
                 style={{
                 backgroundColor: activeScenario.id === s.id ? "#FFE052" : "var(--card-bg)",
                 border: "2.5px solid var(--border-color)",
@@ -215,9 +218,9 @@ export default function AIChatPage() {
                 <div className="flex items-center gap-3 text-lg">
                     {s.icon} <span className="whitespace-nowrap">{s.title}</span>
                 </div>
-            </button>
+            </motion.button>
             ))}
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* Chat Area */}
@@ -251,13 +254,16 @@ export default function AIChatPage() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5 bg-[var(--bg-base)]">
-          {messages.map(msg => (
-            <motion.div 
-              key={msg.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} gap-3 w-full`}
-            >
+          <AnimatePresence>
+            {messages.map(msg => (
+              <motion.div 
+                key={msg.id}
+                variants={slideUpVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} gap-3 w-full`}
+              >
               {msg.sender === "ai" && (
                 <div className="w-10 h-10 rounded-full bg-[#4ECCD3] flex items-center justify-center flex-shrink-0" style={{ border: "2.5px solid var(--border-color)" }}>
                   <Bot size={20} color="#111118" />
@@ -276,9 +282,11 @@ export default function AIChatPage() {
               </div>
             </motion.div>
           ))}
+          </AnimatePresence>
           
+          <AnimatePresence>
           {isTyping && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start gap-3">
+            <motion.div variants={slideUpVariants} initial="hidden" animate="visible" exit="exit" className="flex justify-start gap-3">
                <div className="w-10 h-10 rounded-full bg-[#4ECCD3] flex items-center justify-center flex-shrink-0" style={{ border: "2.5px solid var(--border-color)" }}>
                   <Bot size={20} color="#111118" />
                 </div>
@@ -319,6 +327,7 @@ export default function AIChatPage() {
              </button>
            </motion.div>
           )}
+          </AnimatePresence>
           <div ref={messagesEndRef} />
         </div>
 
@@ -326,19 +335,21 @@ export default function AIChatPage() {
         <div className="p-4 border-t-[3px] bg-[var(--bg-base)] flex flex-col gap-3" style={{ borderColor: "var(--border-color)" }}>
             {/* Suggestions */}
             {!isTyping && !showSummary && currentTurn < activeScenario.turns.length && (
-                <div className="flex gap-2.5 overflow-x-auto hide-scrollbar pb-2 pt-1">
+                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="flex gap-2.5 overflow-x-auto hide-scrollbar pb-2 pt-1">
                     <span className="text-[var(--text-3)] text-sm font-bold py-1.5 flex-shrink-0">Gợi ý:</span>
                     {activeScenario.turns[currentTurn].suggestions.map((sug, i) => (
-                        <button
+                        <motion.button
+                            variants={cardVariants}
+                            whileHover={{ y: -2, boxShadow: "var(--neo-shadow-lg)" }}
                             key={i}
                             onClick={() => setInput(sug)}
                             className="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-bold bg-[var(--card-bg)] text-[var(--text-1)] active:scale-95 transition-transform"
                             style={{ border: "2.5px solid var(--border-color)", boxShadow: "2px 2px 0px var(--border-color)" }}
                         >
                             {sug}
-                        </button>
+                        </motion.button>
                     ))}
-                </div>
+                </motion.div>
             )}
 
             <div className="flex gap-3 items-end">
@@ -364,6 +375,6 @@ export default function AIChatPage() {
             </div>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

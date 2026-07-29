@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { pageVariants, containerVariants, cardVariants, popVariants, slideUpVariants } from "@/lib/animations";
 import { getGamificationState, saveGamificationState } from "@/lib/gamification";
 import { getStreak } from "@/lib/db";
 import { Check, Flame, Star, BookOpen, Target, Zap, Trophy, Swords } from "lucide-react";
@@ -23,6 +24,13 @@ export default function QuestsPage() {
   const [gamification, setGamification] = useState<any>(null);
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function Skeleton({ w = '100%', h = 20, r = 8 }: { w?: number | string; h?: number; r?: number }) {
+    return <div style={{ width: w, height: h, borderRadius: r, background: 'var(--card-bg)', overflow: 'hidden', border: '1.5px solid var(--border-color)' }}>
+      <div className="skeleton-shimmer" style={{ width: '100%', height: '100%' }} />
+    </div>;
+  }
 
   useEffect(() => {
     const loadData = async () => {
@@ -86,9 +94,18 @@ export default function QuestsPage() {
     const newState = { ...gamification, xp: gamification.xp + reward };
     setGamification(newState);
     await saveGamificationState(newState);
+
+    setToast(`+${reward} XP`);
+    setTimeout(() => setToast(null), 3000);
   };
 
-  if (loading) return <div className="p-8 text-center" style={{ color: "var(--text-1)" }}>Đang tải nhiệm vụ...</div>;
+  if (loading) return (
+    <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto", paddingBottom: "100px", display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <Skeleton h={60} />
+      <Skeleton h={100} />
+      <Skeleton h={100} />
+    </div>
+  );
 
   const dailyQuests = quests.filter(q => q.type === "daily");
   const weeklyQuests = quests.filter(q => q.type === "weekly");
@@ -97,7 +114,8 @@ export default function QuestsPage() {
     const isCompleted = quest.current >= quest.target;
     
     return (
-      <div 
+      <motion.div 
+        variants={cardVariants}
         style={{
           backgroundColor: "var(--card-bg)",
           border: "2.5px solid var(--border-color)",
@@ -136,12 +154,15 @@ export default function QuestsPage() {
         </div>
         
         <div style={{ width: "100%", height: "16px", backgroundColor: "var(--bg-base)", border: "2px solid var(--border-color)", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
-          <div style={{ 
-            width: `${Math.min(100, (quest.current / quest.target) * 100)}%`, 
-            height: "100%", backgroundColor: quest.color,
-            borderRight: quest.current > 0 ? "2px solid var(--border-color)" : "none",
-            transition: "width 0.3s ease"
-          }} />
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min(100, (quest.current / quest.target) * 100)}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            style={{ 
+              height: "100%", backgroundColor: quest.color,
+              borderRight: quest.current > 0 ? "2px solid var(--border-color)" : "none",
+            }} 
+          />
           <span style={{ position: "absolute", width: "100%", textAlign: "center", top: -2, fontSize: "0.75rem", fontWeight: 800, color: "var(--text-1)", mixBlendMode: "difference" }}>
             {quest.current} / {quest.target}
           </span>
@@ -176,18 +197,47 @@ export default function QuestsPage() {
             }
           }}
         >
-          {quest.isClaimed ? <><Check size={18} /> Đã nhận</> : isCompleted ? "Nhận thưởng" : "Chưa hoàn thành"}
+          {quest.isClaimed ? <><motion.div variants={popVariants} initial="hidden" animate="visible"><Check size={18} /></motion.div> Đã nhận</> : isCompleted ? "Nhận thưởng" : "Chưa hoàn thành"}
         </button>
-      </div>
+      </motion.div>
     );
   };
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      style={{ padding: "20px", maxWidth: "800px", margin: "0 auto", paddingBottom: "100px" }}
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      style={{ padding: "20px", maxWidth: "800px", margin: "0 auto", paddingBottom: "100px", position: "relative" }}
     >
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            variants={slideUpVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            style={{
+              position: "fixed",
+              bottom: "20px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              backgroundColor: "#38E54D",
+              color: "#111",
+              padding: "12px 24px",
+              borderRadius: "12px",
+              fontWeight: 900,
+              border: "3px solid var(--border-color)",
+              boxShadow: "4px 4px 0px var(--border-color)",
+              zIndex: 100,
+              fontSize: "1.2rem"
+            }}
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <header style={{ marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
           <p style={{ color: "var(--text-2)", margin: "0 0 4px 0", fontWeight: 700 }}>
@@ -214,22 +264,30 @@ export default function QuestsPage() {
         <h2 style={{ color: "var(--text-1)", fontWeight: 900, display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
           <span style={{ fontFamily: "sans-serif, Apple Color Emoji, Segoe UI Emoji" }}>⚡</span> Nhiệm vụ hằng ngày
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
           {dailyQuests.map((quest) => (
             <QuestCard key={quest.id} quest={quest} />
           ))}
-        </div>
+        </motion.div>
       </section>
 
       <section>
         <h2 style={{ color: "var(--text-1)", fontWeight: 900, display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
           <span style={{ fontFamily: "sans-serif, Apple Color Emoji, Segoe UI Emoji" }}>🔥</span> Nhiệm vụ tuần
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
+        <motion.div 
+          variants={{
+            hidden: {},
+            visible: {
+              transition: { staggerChildren: 0.055, delayChildren: 0.3 }
+            }
+          }} 
+          initial="hidden" animate="visible" 
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
           {weeklyQuests.map((quest) => (
             <QuestCard key={quest.id} quest={quest} />
           ))}
-        </div>
+        </motion.div>
       </section>
     </motion.div>
   );

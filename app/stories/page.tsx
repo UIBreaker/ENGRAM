@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { pageVariants, containerVariants, cardVariants, slideUpVariants, popVariants, fadeVariants } from "@/lib/animations";
 import { BookOpen, MessageSquare, Newspaper, X, Clock, ChevronRight, Bookmark } from "lucide-react";
 import { getWords } from "@/lib/db";
 import { useTheme } from "@/lib/theme";
@@ -23,6 +24,12 @@ interface Word {
   id: string;
   word: string;
   meaning: string;
+}
+
+function Skeleton({ w = '100%', h = 20, r = 8 }: { w?: number | string; h?: number; r?: number }) {
+  return <div style={{ width: w, height: h, borderRadius: r, background: 'var(--card-bg)', overflow: 'hidden', border: '1.5px solid var(--border-color)' }}>
+    <div className="skeleton-shimmer" style={{ width: '100%', height: '100%' }} />
+  </div>;
 }
 
 // Sample Data
@@ -138,7 +145,7 @@ export default function StoriesPage() {
                 borderRadius: "12px",
                 cursor: "pointer",
                 fontWeight: "bold",
-                border: "1.5px solid #111"
+                border: "1.5px solid var(--border-color)"
               }}
             >
               {word}
@@ -182,16 +189,28 @@ export default function StoriesPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: "2rem", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
-          <BookOpen size={48} />
-        </motion.div>
+      <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto", paddingBottom: "100px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem" }}>
+        {[1, 2, 3].map(i => (
+          <div key={i} className="card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Skeleton w={40} h={40} r={20} />
+              <Skeleton w={60} h={28} />
+            </div>
+            <Skeleton h={24} w="80%" />
+            <div style={{ display: "flex", gap: "1rem" }}>
+              <Skeleton w={80} h={20} />
+              <Skeleton w={80} h={20} />
+            </div>
+            <Skeleton h={60} />
+            <Skeleton h={40} />
+          </div>
+        ))}
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto", paddingBottom: "100px" }}>
+    <motion.div variants={pageVariants} initial="hidden" animate="visible" exit="exit" style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto", paddingBottom: "100px" }}>
       <header style={{ marginBottom: "2rem", textAlign: "center" }}>
         <h1 style={{ fontSize: "2.5rem", fontWeight: "900", marginBottom: "0.5rem" }}>Sổ tay Ngữ Cảnh</h1>
         <p style={{ color: "var(--text-2)", fontSize: "1.1rem" }}>Học từ qua ngữ cảnh thực tế</p>
@@ -204,37 +223,50 @@ export default function StoriesPage() {
             onClick={() => setActiveTab(tab as any)}
             className="card"
             style={{
+              position: "relative",
               padding: "0.5rem 1.5rem",
               cursor: "pointer",
-              backgroundColor: activeTab === tab ? "#9C8EFA" : "var(--card-bg)",
-              color: activeTab === tab ? "#fff" : "var(--text-1)",
+              backgroundColor: "var(--card-bg)",
+              color: activeTab === tab ? "#111" : "var(--text-1)",
               fontWeight: "bold",
               transition: "transform 0.1s"
             }}
           >
-            {tab === "Tin Tức" && <Newspaper size={16} style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }} />}
-            {tab === "Hội Thoại" && <MessageSquare size={16} style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }} />}
-            {tab === "Truyện Ngắn" && <BookOpen size={16} style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }} />}
-            {tab}
+            {activeTab === tab && (
+              <motion.div
+                layoutId="activeStoryTab"
+                style={{ position: "absolute", inset: 0, backgroundColor: "#9C8EFA", zIndex: 0, border: "2.5px solid var(--border-color)", borderRadius: "inherit", margin: "-2.5px" }}
+              />
+            )}
+            <span style={{ position: "relative", zIndex: 1 }}>
+              {tab === "Tin Tức" && <Newspaper size={16} style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }} />}
+              {tab === "Hội Thoại" && <MessageSquare size={16} style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }} />}
+              {tab === "Truyện Ngắn" && <BookOpen size={16} style={{ display: "inline", marginRight: "8px", verticalAlign: "middle" }} />}
+              {tab}
+            </span>
           </button>
         ))}
       </div>
 
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
-        gap: "2rem" 
-      }}>
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        style={{ 
+          display: "grid", 
+          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
+          gap: "2rem" 
+        }}
+      >
         {filteredStories.map((story, i) => (
           <motion.div
             key={story.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
+            variants={cardVariants}
             className="card"
-            style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", cursor: "pointer" }}
+            style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", cursor: "pointer", transition: "transform 0.08s ease, box-shadow 0.08s ease" }}
             onClick={() => setSelectedStory(story)}
-            whileHover={{ y: -5 }}
+            whileHover={{ y: -2, boxShadow: "var(--neo-shadow-lg)" }}
+            whileTap={{ scale: 0.98 }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <span style={{ fontSize: "2rem", fontFamily: "sans-serif, Apple Color Emoji, Segoe UI Emoji" }}>{story.emoji}</span>
@@ -271,14 +303,15 @@ export default function StoriesPage() {
             </button>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       <AnimatePresence>
         {selectedStory && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            variants={fadeVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             style={{
               position: "fixed",
               top: 0, left: 0, right: 0, bottom: 0,
@@ -292,9 +325,7 @@ export default function StoriesPage() {
             onClick={() => setSelectedStory(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              variants={slideUpVariants}
               onClick={e => e.stopPropagation()}
               className="card"
               style={{
@@ -349,6 +380,6 @@ export default function StoriesPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

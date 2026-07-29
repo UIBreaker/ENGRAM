@@ -1,10 +1,31 @@
 "use client";
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { seedSampleData } from "@/lib/db";
 import { ThemeProvider } from "@/lib/theme";
+import { pageVariants } from "@/lib/animations";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
 import QuickAddButton from "./QuickAddButton";
+
+function PageTransition({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={pathname}
+        variants={pageVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        style={{ flex: 1, display: "flex", flexDirection: "column" }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -19,9 +40,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}
           className="md-main"
         >
-          {/* pb-nav: clears mobile bottom nav bar */}
-          <div className="pb-nav md-pb-0" style={{ flex: 1 }}>
-            {children}
+          <div className="pb-nav md-pb-0" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <PageTransition>{children}</PageTransition>
           </div>
         </main>
         <BottomNav />

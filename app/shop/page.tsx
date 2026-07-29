@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { pageVariants, containerVariants, cardVariants, slideUpVariants, fadeVariants } from "@/lib/animations";
 import { Coins, Lock, Check, Sparkles, Palette, User, Shield } from "lucide-react";
 import { getGamificationState, saveGamificationState } from "@/lib/gamification";
 
@@ -40,6 +41,12 @@ const shopItems: ShopItem[] = [
 ];
 
 export default function ShopPage() {
+  function Skeleton({ w = '100%', h = 20, r = 8 }: { w?: number | string; h?: number; r?: number }) {
+    return <div style={{ width: w, height: h, borderRadius: r, background: 'var(--card-bg)', overflow: 'hidden', border: '1.5px solid var(--border-color)' }}>
+      <div className="skeleton-shimmer" style={{ width: '100%', height: '100%' }} />
+    </div>;
+  }
+
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [streak, setStreak] = useState(0);
@@ -75,6 +82,12 @@ export default function ShopPage() {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
+
+  const xpMotion = useMotionValue(0);
+  const displayXp = useTransform(xpMotion, Math.round);
+  useEffect(() => {
+    animate(xpMotion, xp, { duration: 1, ease: "easeOut" });
+  }, [xp, xpMotion]);
 
   const handlePurchase = async (item: ShopItem) => {
     if (xp < item.price) {
@@ -129,7 +142,7 @@ export default function ShopPage() {
   const filteredItems = shopItems.filter(i => i.category === activeTab);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8 min-h-screen pb-20">
+    <motion.div variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="max-w-6xl mx-auto p-4 md:p-8 min-h-screen pb-20">
       {/* Toast */}
       <AnimatePresence>
         {toast && (
@@ -163,7 +176,9 @@ export default function ShopPage() {
           <Coins size={40} color="#111118" className="animate-bounce" />
           <div>
             <div className="text-sm font-black uppercase text-[#111118] opacity-80 tracking-wider">Số dư của bạn</div>
-            <div className="text-4xl font-black text-[#111118]">{xp} XP</div>
+            <motion.div className="text-4xl font-black text-[#111118] flex gap-2">
+              <motion.span>{displayXp}</motion.span> XP
+            </motion.div>
           </div>
         </div>
       </motion.div>
@@ -178,15 +193,27 @@ export default function ShopPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as Category)}
-            className="flex items-center gap-2.5 px-6 py-4 rounded-xl font-black text-lg transition-transform whitespace-nowrap"
+            className="relative flex items-center gap-2.5 px-6 py-4 rounded-xl font-black text-lg transition-transform whitespace-nowrap"
             style={{
-              backgroundColor: activeTab === tab.id ? tab.color : "var(--card-bg)",
+              backgroundColor: "transparent",
               color: activeTab === tab.id ? "#111118" : "var(--text-1)",
-              border: "3px solid var(--border-color)",
-              boxShadow: activeTab === tab.id ? "4px 4px 0px var(--border-color)" : "var(--neo-shadow)",
-              transform: activeTab === tab.id ? "translate(-2px, -2px)" : "translate(0,0)"
+              border: activeTab !== tab.id ? "3px solid var(--border-color)" : "none",
             }}
           >
+            {activeTab === tab.id && (
+              <motion.div
+                layoutId="activeShopTab"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: tab.color,
+                  borderRadius: "0.75rem",
+                  border: "3px solid var(--border-color)",
+                  boxShadow: "4px 4px 0px var(--border-color)",
+                  zIndex: -1
+                }}
+              />
+            )}
             <tab.icon size={24} strokeWidth={2.5} />
             {tab.label}
           </button>
@@ -196,19 +223,26 @@ export default function ShopPage() {
       {/* Item Grid */}
       <motion.div 
         key={activeTab}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
       >
         {filteredItems.map(item => {
           const status = getStatus(item);
           return (
-            <div 
+            <motion.div 
+              variants={cardVariants}
+              whileHover={{ y: -4, boxShadow: "var(--neo-shadow-lg)" }}
               key={item.id}
-              className="bg-[var(--card-bg)] rounded-2xl p-6 flex flex-col border-[3px] border-[var(--border-color)] transition-transform hover:-translate-y-1"
+              className="relative bg-[var(--card-bg)] rounded-2xl p-6 flex flex-col border-[3px] border-[var(--border-color)] transition-transform"
               style={{ boxShadow: "var(--neo-shadow)" }}
             >
+              {status.type === "locked" && (
+                <div className="absolute inset-0 z-10 bg-[var(--card-bg)]/20 rounded-xl overflow-hidden pointer-events-none">
+                  <div className="skeleton-shimmer w-full h-full opacity-30" />
+                </div>
+              )}
               <div className="flex items-start gap-4 mb-5">
                 <div 
                   className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border-[3px] border-[var(--border-color)] flex-shrink-0"
@@ -251,10 +285,10 @@ export default function ShopPage() {
                   {status.text}
                 </button>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

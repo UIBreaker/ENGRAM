@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
+import { pageVariants, containerVariants, cardVariants, popVariants, slideUpVariants, fadeVariants, heroVariants } from "@/lib/animations";
 import { getWords, getStreak, getSessions } from "@/lib/db";
 import { getGamificationState, BADGES } from "@/lib/gamification";
 import { getRankLevel } from "@/lib/ranks";
@@ -23,6 +24,21 @@ export default function ProfilePage() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [rank, setRank] = useState<any>(null);
+
+  function Skeleton({ w = '100%', h = 20, r = 8 }: { w?: number | string; h?: number; r?: number }) {
+    return <div style={{ width: w, height: h, borderRadius: r, background: 'var(--card-bg)', overflow: 'hidden', border: '1.5px solid var(--border-color)' }}>
+      <div className="skeleton-shimmer" style={{ width: '100%', height: '100%' }} />
+    </div>;
+  }
+
+  function CountUpNumber({ value }: { value: number }) {
+    const motionVal = useMotionValue(0);
+    const displayVal = useTransform(motionVal, Math.round);
+    useEffect(() => {
+      animate(motionVal, value, { duration: 1.5, ease: "easeOut" });
+    }, [value, motionVal]);
+    return <motion.span>{displayVal}</motion.span>;
+  }
 
   const [chartData, setChartData] = useState([
     { name: "Cơ bản", words: 45 },
@@ -72,7 +88,15 @@ export default function ProfilePage() {
   }, []);
 
   if (loading) {
-    return <div className="p-8 text-center" style={{ color: "var(--text-1)" }}>Đang tải hồ sơ...</div>;
+    return (
+      <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "32px" }}>
+        <Skeleton h={200} />
+        <div style={{ display: "flex", gap: "16px" }}>
+          <Skeleton h={100} /><Skeleton h={100} /><Skeleton h={100} /><Skeleton h={100} />
+        </div>
+        <Skeleton h={300} />
+      </div>
+    );
   }
 
   // Calendar Heatmap generation
@@ -98,10 +122,10 @@ export default function ProfilePage() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: "20px", maxWidth: "800px", margin: "0 auto", paddingBottom: "100px" }}>
+    <motion.div variants={pageVariants} initial="hidden" animate="visible" exit="exit" style={{ padding: "20px", maxWidth: "800px", margin: "0 auto", paddingBottom: "100px" }}>
       
       {/* Hero Section */}
-      <section style={{ backgroundColor: "var(--card-bg)", border: "4px solid var(--border-color)", boxShadow: "var(--neo-shadow)", borderRadius: "20px", padding: "32px", display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "32px", position: "relative" }}>
+      <motion.section variants={heroVariants} initial="hidden" animate="visible" style={{ backgroundColor: "var(--card-bg)", border: "4px solid var(--border-color)", boxShadow: "var(--neo-shadow)", borderRadius: "20px", padding: "32px", display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "32px", position: "relative" }}>
         <button style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", cursor: "pointer", color: "var(--text-2)" }}>
           <Settings size={24} />
         </button>
@@ -135,36 +159,37 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-      </section>
+      </motion.section>
 
       {/* 4 Stat Cards */}
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "16px", marginBottom: "32px" }}>
+      <motion.section variants={containerVariants} initial="hidden" animate="visible" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "16px", marginBottom: "32px" }}>
         {[
           { icon: BookOpen, label: "Từ đã học", value: stats.totalWords, color: "#4ECCD3" },
           { icon: Flame, label: "Chuỗi ngày", value: stats.streak, color: "#FF8E53" },
           { icon: Clock, label: "Ngày học", value: stats.daysStudied, color: "#9C8EFA" },
           { icon: Star, label: "Tổng XP", value: stats.xp, color: "#FFE052" }
         ].map((stat, i) => (
-          <div key={i} style={{ backgroundColor: "var(--card-bg)", border: "2.5px solid var(--border-color)", borderRadius: "16px", padding: "16px", boxShadow: "4px 4px 0 var(--border-color)", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px" }}>
+          <motion.div variants={cardVariants} whileHover={{ y: -4, boxShadow: "6px 6px 0 var(--border-color)" }} key={i} style={{ backgroundColor: "var(--card-bg)", border: "2.5px solid var(--border-color)", borderRadius: "16px", padding: "16px", boxShadow: "4px 4px 0 var(--border-color)", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "12px", transition: "box-shadow 0.08s ease" }}>
             <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: stat.color, border: "2px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <stat.icon size={20} color="#111118" />
             </div>
             <div>
-              <div style={{ color: "var(--text-1)", fontSize: "1.8rem", fontWeight: 900, lineHeight: 1 }}>{stat.value}</div>
+              <div style={{ color: "var(--text-1)", fontSize: "1.8rem", fontWeight: 900, lineHeight: 1 }}><CountUpNumber value={stat.value} /></div>
               <div style={{ color: "var(--text-2)", fontSize: "0.9rem", fontWeight: 700, marginTop: "4px" }}>{stat.label}</div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </section>
+      </motion.section>
 
       {/* Streak Calendar */}
       <section style={{ backgroundColor: "var(--card-bg)", border: "2.5px solid var(--border-color)", borderRadius: "16px", padding: "24px", boxShadow: "4px 4px 0 var(--border-color)", marginBottom: "32px" }}>
         <h2 style={{ color: "var(--text-1)", fontWeight: 900, fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
           <CalendarIcon /> Hoạt động 35 ngày qua
         </h2>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
           {heatmapDays.map((day, i) => (
-            <div 
+            <motion.div 
+              variants={fadeVariants}
               key={i} 
               title={day.date}
               style={{ 
@@ -175,17 +200,19 @@ export default function ProfilePage() {
               }} 
             />
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* Badges Grid */}
       <section style={{ marginBottom: "32px" }}>
         <h2 style={{ color: "var(--text-1)", fontWeight: 900, fontSize: "1.2rem", marginBottom: "16px" }}>Thành tựu</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "16px" }}>
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "16px" }}>
           {BADGES.map((badge) => {
             const isUnlocked = gamification?.unlockedBadges.includes(badge.id);
             return (
-              <div 
+              <motion.div 
+                variants={cardVariants}
+                whileHover={isUnlocked ? { scale: 1.05 } : {}}
                 key={badge.id}
                 title={badge.desc}
                 style={{ 
@@ -207,14 +234,14 @@ export default function ProfilePage() {
                   <span style={{ fontFamily: "sans-serif, Apple Color Emoji, Segoe UI Emoji" }}>{badge.emoji}</span>
                 </div>
                 <div style={{ color: "var(--text-1)", fontWeight: 800, fontSize: "0.9rem", lineHeight: 1.2 }}>{badge.name}</div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </section>
 
       {/* Charts */}
-      <section style={{ backgroundColor: "var(--card-bg)", border: "2.5px solid var(--border-color)", borderRadius: "16px", padding: "24px", boxShadow: "4px 4px 0 var(--border-color)", marginBottom: "32px" }}>
+      <motion.section variants={fadeVariants} initial="hidden" animate="visible" style={{ backgroundColor: "var(--card-bg)", border: "2.5px solid var(--border-color)", borderRadius: "16px", padding: "24px", boxShadow: "4px 4px 0 var(--border-color)", marginBottom: "32px" }}>
         <h2 style={{ color: "var(--text-1)", fontWeight: 900, fontSize: "1.2rem", marginBottom: "24px" }}>Phân bố chủ đề</h2>
         <div style={{ width: "100%", height: "250px" }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -228,10 +255,10 @@ export default function ProfilePage() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </section>
+      </motion.section>
 
       {/* Settings */}
-      <section style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <motion.section variants={fadeVariants} initial="hidden" animate="visible" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         <h2 style={{ color: "var(--text-1)", fontWeight: 900, fontSize: "1.2rem", marginBottom: "8px" }}>Cài đặt</h2>
         
         {mounted && (
@@ -255,7 +282,7 @@ export default function ProfilePage() {
         <button style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px", backgroundColor: "var(--card-bg)", border: "2.5px solid var(--border-color)", borderRadius: "12px", color: "var(--text-1)", fontWeight: 800, cursor: "pointer" }}>
           <HelpCircle size={20} /> Hỗ trợ & Góp ý
         </button>
-      </section>
+      </motion.section>
 
     </motion.div>
   );
