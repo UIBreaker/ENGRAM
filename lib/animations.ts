@@ -15,15 +15,12 @@ export const ease = {
 
 // ── Page Transitions ──────────────────────────────────────
 export const pageVariants: Variants = {
-  hidden:  { opacity: 0, y: 14 },
+  hidden:  { opacity: 0, y: 6 },
   visible: {
     opacity: 1, y: 0,
-    transition: { duration: 0.28, ease: ease.smooth },
+    transition: { duration: 0.15, ease: ease.smooth },
   },
-  exit:    {
-    opacity: 0, y: -8,
-    transition: { duration: 0.16, ease: "easeIn" },
-  },
+  exit:    { opacity: 0, transition: { duration: 0.05 } },
 };
 
 // ── Card / Item Entrance (used in stagger containers) ─────

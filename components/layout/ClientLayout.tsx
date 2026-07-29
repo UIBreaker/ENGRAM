@@ -12,18 +12,15 @@ import QuickAddButton from "./QuickAddButton";
 function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={pathname}
-        variants={pageVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        style={{ flex: 1, display: "flex", flexDirection: "column" }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={pathname}
+      variants={pageVariants}
+      initial="hidden"
+      animate="visible"
+      style={{ flex: 1, display: "flex", flexDirection: "column" }}
+    >
+      {children}
+    </motion.div>
   );
 }
 

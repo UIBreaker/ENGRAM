@@ -42,6 +42,7 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
   return (
     <Link
       href={item.href}
+      prefetch={true}
       style={{
         display: "flex", alignItems: "center", gap: 10,
         padding: "8px 11px", borderRadius: 10,

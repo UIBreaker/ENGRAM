@@ -44,7 +44,7 @@ export default function BottomNav() {
           const active = href === "/" ? path === "/" : path.startsWith(href);
           const isFlashcard = href === "/flashcard";
           return (
-            <Link key={href} href={href} className="bnav-item" style={{
+            <Link key={href} href={href} prefetch={true} className="bnav-item" style={{
               flex: 1, display: "flex", flexDirection: "column",
               alignItems: "center", gap: 2,
               padding: "6px 2px 9px", textDecoration: "none",
