@@ -4,6 +4,7 @@ import { seedSampleData } from "@/lib/db";
 import { ThemeProvider } from "@/lib/theme";
 import Sidebar from "./Sidebar";
 import BottomNav from "./BottomNav";
+import QuickAddButton from "./QuickAddButton";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         </main>
         <BottomNav />
+        <QuickAddButton />
         <style>{`
           @media (min-width: 768px) {
             .md-main  { margin-left: 220px; }
