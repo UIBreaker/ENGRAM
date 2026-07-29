@@ -524,9 +524,9 @@ export default function Dashboard() {
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 4 }}
       >
         {[
-          { href: "/stories",    emoji: "📖", label: "Stories", color: "#FF8E53" },
-          { href: "/level-test", emoji: "📊", label: "Test trình độ", color: "#4ECCD3" },
-          { href: "/shop",       emoji: "🛍️", label: "Cửa hàng", color: "#FF70A6" },
+          { href: "/stories",    emoji: "📖", label: "Ngữ cảnh", color: "#FF8E53" },
+          { href: "/quests",     emoji: "✅", label: "Nhiệm vụ", color: "#38E54D" },
+          { href: "/vocabulary", emoji: "📚", label: "Kho từ vựng", color: "#FFE052" },
         ].map(({ href, emoji, label, color }) => (
           <motion.div key={href} variants={cardVariants}>
             <Link href={href} style={{ textDecoration: "none" }}>

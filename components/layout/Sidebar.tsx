@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Home, BookOpen, BrainCircuit, Target, Sparkles, Trophy,
-  BookMarked, BarChart3, MessageSquareMore, ShoppingBag,
+  BookMarked, MessageSquareMore,
   CheckSquare, Swords, UserCircle2, ChevronRight,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
@@ -26,14 +26,12 @@ const LEARNING_NAV: NavItem[] = [
   { href: "/vocabulary",  icon: BookOpen,            label: "Kho từ vựng",       color: "#FFE052" },
   { href: "/flashcard",   icon: BrainCircuit,        label: "Ôn tập từ vựng",    color: "#9C8EFA" },
   { href: "/stories",     icon: BookMarked,          label: "Sổ tay ngữ cảnh",   color: "#FF8E53", isNew: true },
-  { href: "/level-test",  icon: BarChart3,           label: "Đánh giá trình độ", color: "#4ECCD3", isNew: true },
   { href: "/ai-chat",     icon: MessageSquareMore,   label: "Giao tiếp AI",      color: "#38E54D", isNew: true },
 ];
 
 const GAME_NAV: NavItem[] = [
   { href: "/practice",    icon: Target,              label: "Luyện tập",         color: "#4ECCD3" },
   { href: "/leaderboard", icon: Trophy,              label: "Bảng xếp hạng",     color: "#FF70A6" },
-  { href: "/shop",        icon: ShoppingBag,         label: "Cửa hàng",          color: "#FFE052", isNew: true },
   { href: "/quests",      icon: CheckSquare,         label: "Nhiệm vụ",          color: "#38E54D", isNew: true },
   { href: "/duel",        icon: Swords,              label: "Thách đấu",         color: "#FF5964", isNew: true },
 ];

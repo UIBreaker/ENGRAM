@@ -66,20 +66,38 @@ function toSession(r: any): StudySession {
 }
 
 // ═══════════════════════════════════════════════════════
+//  IN-MEMORY CACHE FOR HIGH PERFORMANCE
+// ═══════════════════════════════════════════════════════
+let wordsCache: { data: Word[]; timestamp: number } | null = null;
+let sessionsCache: { data: StudySession[]; timestamp: number } | null = null;
+const CACHE_TTL_MS = 6000; // 6s TTL for ultra-fast navigation
+
+export function clearDbCache() {
+  wordsCache = null;
+  sessionsCache = null;
+}
+
+// ═══════════════════════════════════════════════════════
 //  WORDS
 // ═══════════════════════════════════════════════════════
 export async function getWords(): Promise<Word[]> {
+  if (wordsCache && Date.now() - wordsCache.timestamp < CACHE_TTL_MS) {
+    return wordsCache.data;
+  }
   const { data, error } = await supabase
     .from("words")
     .select("*")
     .order("created_at", { ascending: false });
-  if (error) { console.error("getWords:", error.message); return []; }
-  return (data ?? []).map(toWord);
+  if (error) { console.error("getWords:", error.message); return wordsCache?.data ?? []; }
+  const result = (data ?? []).map(toWord);
+  wordsCache = { data: result, timestamp: Date.now() };
+  return result;
 }
 
 export async function addWord(
   data: Omit<Word, "id" | "difficulty" | "nextReview" | "lastReview" | "reviewCount" | "correctCount" | "createdAt">
 ): Promise<Word> {
+  wordsCache = null;
   const { data: row, error } = await supabase
     .from("words")
     .insert({
@@ -102,6 +120,7 @@ export async function addWord(
 }
 
 export async function updateWord(id: string, updates: Partial<Word>): Promise<void> {
+  wordsCache = null;
   const { error } = await supabase
     .from("words")
     .update(wordToRow(updates))
@@ -110,6 +129,7 @@ export async function updateWord(id: string, updates: Partial<Word>): Promise<vo
 }
 
 export async function deleteWord(id: string): Promise<void> {
+  wordsCache = null;
   const { error } = await supabase.from("words").delete().eq("id", id);
   if (error) console.error("deleteWord:", error.message);
 }
@@ -187,15 +207,21 @@ export async function updateJournalFeedback(id: string, aiFeedback: string): Pro
 //  STUDY SESSIONS
 // ═══════════════════════════════════════════════════════
 export async function getSessions(): Promise<StudySession[]> {
+  if (sessionsCache && Date.now() - sessionsCache.timestamp < CACHE_TTL_MS) {
+    return sessionsCache.data;
+  }
   const { data, error } = await supabase
     .from("study_sessions")
     .select("*")
     .order("date", { ascending: false });
-  if (error) { console.error("getSessions:", error.message); return []; }
-  return (data ?? []).map(toSession);
+  if (error) { console.error("getSessions:", error.message); return sessionsCache?.data ?? []; }
+  const result = (data ?? []).map(toSession);
+  sessionsCache = { data: result, timestamp: Date.now() };
+  return result;
 }
 
 export async function recordSession(wordsStudied: number, correctCount: number): Promise<void> {
+  sessionsCache = null;
   const today = new Date().toISOString().split("T")[0];
   const { data: existing } = await supabase
     .from("study_sessions")
