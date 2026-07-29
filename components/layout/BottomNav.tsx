@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, BrainCircuit, Target } from "lucide-react";
+import { Home, BookOpen, BrainCircuit, Target, Trophy } from "lucide-react";
 
 const nav = [
   { href: "/",           icon: Home,         label: "Trang chủ", color: "#FF5964" },
   { href: "/vocabulary", icon: BookOpen,      label: "Từ vựng",   color: "#FFE052" },
   { href: "/flashcard",  icon: BrainCircuit,  label: "Ôn tập",    color: "#9C8EFA" },
   { href: "/practice",   icon: Target,        label: "Luyện tập", color: "#4ECCD3" },
+  { href: "/leaderboard",icon: Trophy,        label: "Bảng Hạng", color: "#FF70A6" },
 ];
 
 export default function BottomNav() {

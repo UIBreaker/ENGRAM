@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, BrainCircuit, Target, Sparkles } from "lucide-react";
+import { Home, BookOpen, BrainCircuit, Target, Sparkles, Trophy } from "lucide-react";
 
 const nav = [
   { href: "/",           icon: Home,         label: "Trang chủ",      color: "#FF5964" },
   { href: "/vocabulary", icon: BookOpen,      label: "Kho từ vựng",    color: "#FFE052" },
-  { href: "/flashcard",  icon: BrainCircuit,  label: "Ôn tập",         color: "#9C8EFA" },
+  { href: "/flashcard",  icon: BrainCircuit,  label: "Ôn tập từ vựng", color: "#9C8EFA" },
   { href: "/practice",   icon: Target,        label: "Luyện tập",      color: "#4ECCD3" },
+  { href: "/leaderboard",icon: Trophy,        label: "Bảng xếp hạng",  color: "#FF70A6" },
 ];
 
 export default function Sidebar() {

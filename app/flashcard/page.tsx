@@ -6,6 +6,7 @@ import { getWords, getDueWords, applyRating, updateWord, recordSession } from "@
 import { Word, FlashcardRating, TopicTag, TOPIC_TAGS, TOPIC_EMOJI } from "@/lib/types";
 import Link from "next/link";
 import { speakWord } from "@/lib/audio";
+import { addXP, updateStreakOnStudy } from "@/lib/gamification";
 
 /* ── Progress ── */
 function Progress({ cur, tot }: { cur: number; tot: number }) {
@@ -101,6 +102,15 @@ function CardBack({ word }: { word: Word }) {
 
 /* ── Session Done ── */
 function Done({ stats, onRestart }: { stats: { total: number; correct: number; forgot: number }; onRestart: () => void }) {
+  const [rewardXP, setRewardXP] = useState(0);
+
+  useEffect(() => {
+    updateStreakOnStudy();
+    const earned = stats.correct * 10 + 50;
+    const res = addXP(earned, "flashcard_completion");
+    setRewardXP(res.addedXP);
+  }, []);
+
   const pct = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
   return (
     <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
@@ -109,6 +119,15 @@ function Done({ stats, onRestart }: { stats: { total: number; correct: number; f
       <div>
         <div style={{ fontSize: 24, fontWeight: 900, color: "#000000" }}>Hoàn thành phiên ôn tập!</div>
         <div style={{ fontSize: 13, fontWeight: 600, color: "#555555", marginTop: 4 }}>Thuật toán Spaced Repetition đã cập nhật ngày ôn mới</div>
+        {rewardXP > 0 && (
+          <div style={{
+            fontSize: 14, fontWeight: 900, color: "#000000", marginTop: 8,
+            padding: "4px 14px", background: "#38E54D", border: "2px solid #000",
+            borderRadius: 99, display: "inline-block", boxShadow: "2px 2px 0 #000",
+          }}>
+            ⚡ Thưởng +{rewardXP} XP Kinh nghiệm!
+          </div>
+        )}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, width: "100%", maxWidth: 320 }}>
         <div style={{ background: "#38E54D", border: "2.5px solid #000", borderRadius: 14, padding: "12px 8px", boxShadow: "3px 3px 0 #000" }}>

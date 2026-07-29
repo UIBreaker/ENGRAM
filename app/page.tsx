@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { getWords, getStreak, getSessions, getDueWords } from "@/lib/db";
 import { Word, StudySession } from "@/lib/types";
-import { BrainCircuit, Target, Plus, BookOpen, Clock, CheckCircle2, TrendingUp, Flame, ArrowRight, Sparkles } from "lucide-react";
+import { getRankLevel } from "@/lib/ranks";
+import { getGamificationState } from "@/lib/gamification";
+import { BrainCircuit, Target, Plus, BookOpen, Clock, CheckCircle2, TrendingUp, Flame, ArrowRight, Sparkles, Trophy, Award } from "lucide-react";
 
 const DAYS = ["CN","T2","T3","T4","T5","T6","T7"];
 
@@ -79,7 +81,7 @@ function QuickBtn({ href, icon: Icon, title, sub, bg }: {
         }}>
         <div style={{
           width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-          background: "#FFFFFF", border: "2px solid #000000",
+          background: "#FFFFFF", border: "2.5px solid #000000",
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "2px 2px 0px #000000",
         }}>
@@ -149,6 +151,9 @@ export default function Dashboard() {
 
   const mastered   = words.filter(w => w.difficulty >= 3).length;
   const todayWords = sessions.find(s => s.date === new Date().toISOString().split("T")[0])?.wordsStudied ?? 0;
+  const rankLevel  = getRankLevel(mastered);
+  const gamificationState = getGamificationState();
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Chào buổi sáng" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
 
@@ -171,6 +176,55 @@ export default function Dashboard() {
 
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px 12px" }}>
+
+      {/* ── Gamification Rank Banner ── */}
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 16 }}>
+        <Link href="/leaderboard" style={{ textDecoration: "none" }}>
+          <div style={{
+            border: "2.5px solid #000000",
+            borderRadius: 18,
+            boxShadow: "4px 4px 0px #000000",
+            padding: "14px 18px",
+            background: "#FFFFFF",
+            display: "flex",
+            alignItems: "center",
+            justify: "space-between",
+            cursor: "pointer",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12, background: rankLevel.bg,
+                border: "2px solid #000", display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 22, boxShadow: "2px 2px 0 #000", flexShrink: 0,
+              }}>
+                {rankLevel.badgeEmoji}
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 900, padding: "2px 6px", borderRadius: 99, background: "#000", color: "#FFF" }}>
+                    LEVEL {rankLevel.level}
+                  </span>
+                  <span style={{ fontSize: 15, fontWeight: 900, color: "#000000" }}>
+                    {rankLevel.name} ({rankLevel.cefr})
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#555555", marginTop: 2 }}>
+                  {mastered} từ đã thuộc · {gamificationState.xp} XP kinh nghiệm
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              fontSize: 12, fontWeight: 900, color: "#000000",
+              padding: "6px 12px", borderRadius: 99, background: "#FFE052",
+              border: "2px solid #000", boxShadow: "2px 2px 0 #000",
+              display: "flex", alignItems: "center", gap: 4,
+            }}>
+              <Trophy size={14} /> Bảng Hạng ▶
+            </div>
+          </div>
+        </Link>
+      </motion.div>
 
       {/* ── Header Hero Card ── */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 22 }}>
