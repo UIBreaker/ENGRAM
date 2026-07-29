@@ -188,7 +188,7 @@ export default function Dashboard() {
             background: "#FFFFFF",
             display: "flex",
             alignItems: "center",
-            justify: "space-between",
+            justifyContent: "space-between",
             cursor: "pointer",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
