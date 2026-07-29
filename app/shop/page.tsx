@@ -83,11 +83,18 @@ export default function ShopPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const xpMotion = useMotionValue(0);
-  const displayXp = useTransform(xpMotion, Math.round);
-  useEffect(() => {
-    animate(xpMotion, xp, { duration: 1, ease: "easeOut" });
-  }, [xp, xpMotion]);
+  function AnimatedNumber({ value }: { value: number }) {
+    const [current, setCurrent] = useState(0);
+    useEffect(() => {
+      const controls = animate(0, value, {
+        duration: 1,
+        ease: [0.25, 0.46, 0.45, 0.94],
+        onUpdate(v) { setCurrent(Math.round(v)); }
+      });
+      return () => controls.stop();
+    }, [value]);
+    return <>{current}</>;
+  }
 
   const handlePurchase = async (item: ShopItem) => {
     if (xp < item.price) {
@@ -176,9 +183,9 @@ export default function ShopPage() {
           <Coins size={40} color="#111118" className="animate-bounce" />
           <div>
             <div className="text-sm font-black uppercase text-[#111118] opacity-80 tracking-wider">Số dư của bạn</div>
-            <motion.div className="text-4xl font-black text-[#111118] flex gap-2">
-              <motion.span>{displayXp}</motion.span> XP
-            </motion.div>
+            <div className="text-4xl font-black text-[#111118]">
+              <AnimatedNumber value={xp} /> XP
+            </div>
           </div>
         </div>
       </motion.div>

@@ -32,12 +32,16 @@ export default function ProfilePage() {
   }
 
   function CountUpNumber({ value }: { value: number }) {
-    const motionVal = useMotionValue(0);
-    const displayVal = useTransform(motionVal, Math.round);
+    const [current, setCurrent] = useState(0);
     useEffect(() => {
-      animate(motionVal, value, { duration: 1.5, ease: "easeOut" });
-    }, [value, motionVal]);
-    return <motion.span>{displayVal}</motion.span>;
+      const controls = animate(0, value, {
+        duration: 1.2,
+        ease: [0.25, 0.46, 0.45, 0.94],
+        onUpdate(v) { setCurrent(Math.round(v)); }
+      });
+      return () => controls.stop();
+    }, [value]);
+    return <>{current}</>;
   }
 
   const [chartData, setChartData] = useState([
@@ -106,11 +110,11 @@ export default function ProfilePage() {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const dateStr = d.toISOString().split('T')[0];
-    const studied = sessions.find(s => s.startTime.startsWith(dateStr));
+    const studied = sessions.find(s => s?.date === dateStr || (s?.date && s.date.startsWith(dateStr)));
     heatmapDays.push({
       date: dateStr,
       studied: !!studied,
-      intensity: studied ? Math.floor(Math.random() * 3) + 1 : 0 // Mock intensity
+      intensity: studied ? Math.min(3, Math.ceil((studied.wordsStudied || 1) / 3)) : 0
     });
   }
 
