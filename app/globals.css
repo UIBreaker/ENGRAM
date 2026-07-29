@@ -70,6 +70,63 @@
 
   /* ── Touch ── */
   --touch-min: 44px;
+
+  /* ── Theme-aware card & surface ── */
+  --card-bg:    #FFFFFF;
+  --surface-bg: #F5EFE6;
+  --sidebar-bg: #F5EFE6;
+  --input-bg:   #FFFFFF;
+  --input-text: #000000;
+  --card-text:  #000000;
+  --border-color: #000000;
+  --shadow-color: #000000;
+  --dot-color: rgba(0,0,0,0.06);
+  --scrollbar-track: #F5EFE6;
+  --scrollbar-thumb: #FFE052;
+}
+
+/* ══════════════════════════════════════
+   DARK MODE — Neo-Brutalism Night
+   Deep indigo base · Glow shadows · Bright pastels
+══════════════════════════════════════ */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg:          #0F0F1A;
+  --bg-base:     #0F0F1A;
+  --bg-surface:  #1A1A2E;
+  --bg-raised:   #1E1E35;
+  --bg-overlay:  #16162A;
+
+  /* Text */
+  --text-1: #F0EFF8;
+  --text-2: #C9C8DC;
+  --text-3: #9898B8;
+  --text-4: #6A6A88;
+
+  /* Borders — softened for dark */
+  --border:     rgba(255,255,255,0.2);
+  --border-med: rgba(255,255,255,0.2);
+  --border-hi:  rgba(255,255,255,0.3);
+
+  /* Neo-Brutalism Dark Shadows — colored glow */
+  --neo-border:     2.5px solid rgba(255,255,255,0.22);
+  --neo-shadow:     4px 4px 0px rgba(255,255,255,0.12);
+  --neo-shadow-sm:  2.5px 2.5px 0px rgba(255,255,255,0.1);
+  --neo-shadow-lg:  6px 6px 0px rgba(255,255,255,0.14);
+  --neo-shadow-brand: 4px 4px 0px rgba(156,142,250,0.4);
+
+  /* Theme-aware surfaces */
+  --card-bg:    #1E1E35;
+  --surface-bg: #0F0F1A;
+  --sidebar-bg: #14142A;
+  --input-bg:   #1A1A2E;
+  --input-text: #F0EFF8;
+  --card-text:  #F0EFF8;
+  --border-color: rgba(255,255,255,0.2);
+  --shadow-color: rgba(255,255,255,0.12);
+  --dot-color: rgba(255,255,255,0.04);
+  --scrollbar-track: #1A1A2E;
+  --scrollbar-thumb: #9C8EFA;
 }
 
 /* ── HTML/Body ── */
@@ -89,9 +146,10 @@ body {
   min-height: 100dvh;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
-  /* Subtly floating confetti dot background */
+  transition: background 0.25s ease, color 0.25s ease;
+  /* Confetti dot background */
   background-image:
-    radial-gradient(rgba(0,0,0,0.06) 1.5px, transparent 1.5px);
+    radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
   background-size: 20px 20px;
 }
 
@@ -108,8 +166,8 @@ small, .text-sub { font-size: 12px; line-height: 1.4; color: var(--text-3); }
 /* ── Custom Neo-Brutalism Scrollbar ── */
 @media (hover: hover) {
   ::-webkit-scrollbar              { width: 9px; }
-  ::-webkit-scrollbar-track        { background: #F5EFE6; border-left: 2.5px solid #000; }
-  ::-webkit-scrollbar-thumb        { background: #FFE052; border: 2.5px solid #000; border-radius: 4px; }
+  ::-webkit-scrollbar-track        { background: var(--scrollbar-track); border-left: 2.5px solid var(--border-color); }
+  ::-webkit-scrollbar-thumb        { background: var(--scrollbar-thumb); border: 2.5px solid var(--border-color); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover  { background: #FF5964; }
 }
 
@@ -121,13 +179,14 @@ small, .text-sub { font-size: 12px; line-height: 1.4; color: var(--text-3); }
    NEO-BRUTALISM COMPONENTS
 ══════════════════════════════════════ */
 
-/* Card — pure white, 2.5px black border, hard 4px drop shadow */
+/* Card — theme-aware, 2.5px border, hard drop shadow */
 .card {
-  background: #FFFFFF;
-  border: 2.5px solid #000000;
+  background: var(--card-bg);
+  border: 2.5px solid var(--border-color);
   border-radius: var(--r-md);
   box-shadow: var(--neo-shadow);
-  color: #000000;
+  color: var(--card-text);
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
 /* ── Neo-Brutalism Buttons ── */
@@ -174,8 +233,8 @@ small, .text-sub { font-size: 12px; line-height: 1.4; color: var(--text-3); }
 }
 
 .btn-secondary {
-  background: #FFFFFF;
-  color: #000000;
+  background: var(--card-bg);
+  color: var(--card-text);
 }
 
 .btn-ghost {
@@ -199,27 +258,27 @@ small, .text-sub { font-size: 12px; line-height: 1.4; color: var(--text-3); }
 /* ── Neo-Brutalism Inputs ── */
 .input {
   width: 100%;
-  background: #FFFFFF;
-  border: 2.5px solid #000000;
+  background: var(--input-bg);
+  border: 2.5px solid var(--border-color);
   border-radius: var(--r-md);
-  color: #000000;
+  color: var(--input-text);
   font-size: 15px;
   font-weight: 600;
   font-family: var(--font-inter), system-ui, sans-serif;
   padding: 11px 15px;
   outline: none;
-  box-shadow: 3px 3px 0px #000000;
-  transition: box-shadow 0.1s ease, transform 0.1s ease;
+  box-shadow: 3px 3px 0px var(--shadow-color);
+  transition: box-shadow 0.1s ease, transform 0.1s ease, background 0.25s ease;
   -webkit-appearance: none;
   appearance: none;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 .input:focus {
-  box-shadow: 5px 5px 0px #000000;
+  box-shadow: 5px 5px 0px var(--shadow-color);
   transform: translate(-1px, -1px);
 }
-.input::placeholder { color: #888888; font-weight: 500; }
+.input::placeholder { color: var(--text-4); font-weight: 500; }
 textarea.input { resize: vertical; min-height: 100px; font-size: 15px; }
 
 /* ── Select ── */
@@ -231,7 +290,7 @@ select.input {
   background-size: 16px;
   padding-right: 38px;
 }
-select.input option { background: #FFFFFF; color: #000000; }
+select.input option { background: var(--input-bg); color: var(--input-text); }
 
 /* ── Neo-Brutalism Pill Badges ── */
 .badge {
