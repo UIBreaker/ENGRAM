@@ -60,21 +60,25 @@ export default function QuickAddButton() {
     <>
       <style>{`
         @media (min-width: 768px) {
-          .quick-add-btn { left: 170px !important; bottom: 24px !important; }
+          .quick-add-btn { right: 28px !important; left: auto !important; bottom: 28px !important; }
         }
         @media (max-width: 767px) {
-          .quick-add-btn { right: 16px !important; left: auto !important; bottom: 86px !important; }
+          .quick-add-btn { right: 18px !important; left: auto !important; bottom: 84px !important; }
         }
         .quick-add-btn {
           transition: transform 0.1s ease, box-shadow 0.1s ease;
         }
         .quick-add-btn:hover {
           transform: translate(-2px, -2px) !important;
-          box-shadow: 6px 6px 0 var(--border-color) !important;
+          box-shadow: 5px 5px 0 var(--border-color) !important;
         }
         .quick-add-btn:active {
           transform: translate(2px, 2px) !important;
           box-shadow: 1px 1px 0 var(--border-color) !important;
+        }
+        .quick-add-btn:hover .qa-tooltip {
+          opacity: 1 !important;
+          transform: translateX(-100%) translateY(-50%) scale(1) !important;
         }
         .qa-input {
           width: 100%;
@@ -115,16 +119,16 @@ export default function QuickAddButton() {
         }
       `}</style>
 
-      {/* Floating + Button */}
+      {/* Floating + Button at Bottom-Right */}
       <button
         className="quick-add-btn"
         onClick={() => setOpen(true)}
         aria-label="Thêm từ nhanh"
         style={{
           position: "fixed",
-          left: 170, bottom: 24,
+          right: 28, bottom: 28,
           zIndex: 200,
-          width: 44, height: 44,
+          width: 48, height: 48,
           borderRadius: "50%",
           background: "#FFE052",
           border: "2.5px solid var(--border-color)",
@@ -133,7 +137,30 @@ export default function QuickAddButton() {
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
       >
-        <Plus size={22} color="#000000" strokeWidth={3} />
+        <Plus size={24} color="#000000" strokeWidth={3} />
+        {/* Tooltip on hover */}
+        <span
+          className="qa-tooltip"
+          style={{
+            position: "absolute",
+            left: -12, top: "50%",
+            transform: "translateX(-100%) translateY(-50%) scale(0.9)",
+            opacity: 0,
+            pointerEvents: "none",
+            background: "var(--card-bg)",
+            color: "var(--text-1)",
+            border: "2px solid var(--border-color)",
+            borderRadius: 8,
+            boxShadow: "2px 2px 0 var(--border-color)",
+            padding: "4px 10px",
+            fontSize: 12,
+            fontWeight: 800,
+            whiteSpace: "nowrap",
+            transition: "opacity 0.15s ease, transform 0.15s ease",
+          }}
+        >
+          + Thêm từ nhanh
+        </span>
       </button>
 
       {/* Backdrop */}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect x="24" y="24" width="464" height="464" rx="96" fill="#FFE052" stroke="#000000" stroke-width="32" />
+  <!-- Drop Shadow Effect built-in -->
+  <path d="M160 140 H350 C370 140 370 180 350 180 H220 V230 H320 C340 230 340 270 320 270 H220 V330 H350 C370 330 370 370 350 370 H160 C140 370 140 140 160 140 Z" fill="#000000" />
+  <circle cx="390" cy="130" r="32" fill="#FF5964" stroke="#000000" stroke-width="12" />
+</svg>

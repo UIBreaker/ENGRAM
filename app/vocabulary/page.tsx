@@ -1492,10 +1492,10 @@ export default function VocabularyPage() {
     </button>
   );
 
-  const COL: CSSProperties = { gridTemplateColumns:"2fr 1.2fr 2fr 1fr 1.4fr 0.8fr 64px" };
+  const COL: CSSProperties = { gridTemplateColumns: "1.8fr 1.1fr 2fr 1fr 1.2fr 0.9fr 90px" };
 
   return (
-    <div style={{ maxWidth:1100, margin:"0 auto", padding:"32px 24px 24px" }}>
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px 24px" }}>
 
       {/* Header */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
@@ -1643,18 +1643,18 @@ export default function VocabularyPage() {
       </AnimatePresence>
 
       {/* ── Desktop Table ── */}
-      <div className="vocab-table" style={{ borderRadius:"var(--r-lg)", overflow:"hidden",
-        border:"1px solid var(--border)", background:"var(--bg-raised)" }}>
+      <div className="vocab-table" style={{ borderRadius:"var(--r-lg)", overflowX:"auto",
+        border:"2.5px solid var(--border-color)", background:"var(--bg-raised)", boxShadow: "var(--neo-shadow)" }}>
         {/* Header */}
-        <div style={{ display:"grid", ...COL, padding:"12px 20px",
-          background:"rgba(255,255,255,0.025)", borderBottom:"1px solid var(--border)" }}>
+        <div style={{ display:"grid", ...COL, padding:"12px 16px", minWidth: 800,
+          background:"rgba(255,255,255,0.025)", borderBottom:"2px solid var(--border-color)" }}>
           <SortBtn k="word" label="Từ vựng" />
           <span style={{ fontSize:11, fontWeight:700, color:"var(--text-3)", letterSpacing:"0.08em", textTransform:"uppercase" }}>Phiên âm</span>
           <span style={{ fontSize:11, fontWeight:700, color:"var(--text-3)", letterSpacing:"0.08em", textTransform:"uppercase" }}>Nghĩa</span>
           <span style={{ fontSize:11, fontWeight:700, color:"var(--text-3)", letterSpacing:"0.08em", textTransform:"uppercase" }}>Chủ đề</span>
           <SortBtn k="difficulty" label="Mức độ" />
           <SortBtn k="createdAt" label="Ngày" />
-          <span />
+          <span style={{ textAlign: "right", fontSize: 11, fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase" }}>Thao tác</span>
         </div>
 
         {/* Rows */}
@@ -1664,8 +1664,8 @@ export default function VocabularyPage() {
               initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
               transition={{ delay: i*0.012 }}
               onClick={()=>setSelected(w)}
-              style={{ display:"grid", ...COL, padding:"13px 20px", alignItems:"center",
-                borderBottom:"1px solid var(--border)", cursor:"pointer", transition:"background 0.15s" }}
+              style={{ display:"grid", ...COL, padding:"12px 16px", alignItems:"center", minWidth: 800,
+                borderBottom:"1px solid var(--border-color)", cursor:"pointer", transition:"background 0.15s" }}
               onMouseEnter={e=>(e.currentTarget.style.background="rgba(123,104,238,0.05)")}
               onMouseLeave={e=>(e.currentTarget.style.background="transparent")}
               className="vocab-row">
@@ -1674,7 +1674,7 @@ export default function VocabularyPage() {
               <div style={{ display:"flex", alignItems:"center", gap:8, overflow:"hidden" }}>
                 {w.imageUrl ? (
                   <div style={{ width:28, height:28, borderRadius:6, overflow:"hidden", flexShrink:0,
-                    border:"1px solid var(--border)" }}>
+                    border:"1.5px solid var(--border-color)" }}>
                     <img src={w.imageUrl} alt="" referrerPolicy="no-referrer" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                   </div>
                 ) : (
@@ -1684,7 +1684,7 @@ export default function VocabularyPage() {
                     <ImageIcon size={12} color="rgba(255,255,255,0.5)" />
                   </div>
                 )}
-                <span style={{ fontWeight:700, fontSize:14, color:"var(--text-1)",
+                <span style={{ fontWeight:800, fontSize:14, color:"var(--text-1)",
                   overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                   {w.word}
                 </span>
@@ -1700,22 +1700,20 @@ export default function VocabularyPage() {
               </span>
               <div><TopicBadge t={w.topic} /></div>
               <div><DiffDots v={w.difficulty} /></div>
-              <span style={{ fontSize:12, color:"var(--text-3)" }}>
-                {new Date(w.createdAt).toLocaleDateString("vi-VN",{day:"2-digit",month:"2-digit",year:"2-digit"})}
+              <span style={{ fontSize:11, color:"var(--text-3)", whiteSpace: "nowrap" }}>
+                {new Date(w.createdAt).toLocaleDateString("vi-VN",{day:"2-digit",month:"2-digit"})}
               </span>
 
-              <div style={{ display:"flex", gap:4, justifyContent:"flex-end" }} className="row-actions">
-                <button onClick={e => { e.stopPropagation(); speakWord(w.word, e); }} className="btn btn-ghost" style={{ padding: 6, color: "#65D376" }} title="Phát âm">
-                  <Volume2 size={14} />
+              <div style={{ display:"flex", gap:2, justifyContent:"flex-end" }} className="row-actions">
+                <button onClick={e => { e.stopPropagation(); speakWord(w.word, e); }} className="btn btn-ghost" style={{ padding: 5, color: "#65D376" }} title="Phát âm">
+                  <Volume2 size={15} />
                 </button>
-                <button onClick={e=>{e.stopPropagation();setSelected(w);}} className="btn btn-ghost" style={{padding:6}}>
-                  <Edit3 size={13}/>
+                <button onClick={e=>{e.stopPropagation();setSelected(w);}} className="btn btn-ghost" style={{padding:5}} title="Sửa">
+                  <Edit3 size={14}/>
                 </button>
                 <button onClick={e=>{e.stopPropagation();handleDelete(w.id);}} className="btn btn-ghost"
-                  style={{padding:6}}
-                  onMouseEnter={e=>(e.currentTarget.style.color="#FB7185")}
-                  onMouseLeave={e=>(e.currentTarget.style.color="")}>
-                  <Trash2 size={13}/>
+                  style={{padding:5, color: "#FF5964"}} title="Xóa">
+                  <Trash2 size={14}/>
                 </button>
               </div>
             </motion.div>
@@ -1739,8 +1737,8 @@ export default function VocabularyPage() {
           {list.map((w,i)=>(
             <motion.div key={w.id} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}}
               transition={{delay:i*0.04}} onClick={()=>setSelected(w)}
-              style={{ background:"var(--bg-raised)", border:"1px solid var(--border)",
-                borderRadius:"var(--r-lg)", overflow:"hidden", cursor:"pointer" }}>
+              style={{ background:"var(--bg-raised)", border:"2px solid var(--border-color)",
+                borderRadius:"var(--r-lg)", overflow:"hidden", cursor:"pointer", boxShadow: "2.5px 2.5px 0 var(--border-color)" }}>
               {/* Image strip if available */}
               {w.imageUrl && (
                 <div style={{ height:100, overflow:"hidden" }}>
@@ -1750,16 +1748,39 @@ export default function VocabularyPage() {
                 </div>
               )}
               <div style={{ padding:14 }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom: 8 }}>
                   <div style={{ flex:1 }}>
                     <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:3 }}>
-                      <span style={{ fontWeight:800, fontSize:15, color:"var(--text-1)" }}>{w.word}</span>
+                      <span style={{ fontWeight:800, fontSize:16, color:"var(--text-1)" }}>{w.word}</span>
                       <TopicBadge t={w.topic} />
                     </div>
-                    <div style={{ fontSize:12, color:"var(--text-4)", fontFamily:"monospace", marginBottom:4 }}>{w.phonetics}</div>
+                    <div style={{ fontSize:12, color:"var(--text-4)", fontFamily:"monospace", marginBottom:4, display: "flex", alignItems: "center", gap: 4 }}>
+                      {w.phonetics}
+                      <button onClick={(e) => { e.stopPropagation(); speakWord(w.word, e); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "flex", alignItems: "center" }}>
+                        <Volume2 size={13} color="#65D376" />
+                      </button>
+                    </div>
                     <div style={{ fontSize:13, color:"var(--text-2)" }}>{w.meaning}</div>
                   </div>
                   <DiffDots v={w.difficulty} />
+                </div>
+
+                {/* Mobile Card Action Bar */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border-color)", paddingTop: 8, marginTop: 8 }}>
+                  <span style={{ fontSize: 11, color: "var(--text-4)" }}>
+                    {new Date(w.createdAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })}
+                  </span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={e => { e.stopPropagation(); speakWord(w.word, e); }} className="btn btn-secondary" style={{ padding: "4px 8px", fontSize: 12, minHeight: 28, color: "#65D376" }}>
+                      <Volume2 size={13} /> Nghe
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); setSelected(w); }} className="btn btn-secondary" style={{ padding: "4px 8px", fontSize: 12, minHeight: 28 }}>
+                      <Edit3 size={13} /> Sửa
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); handleDelete(w.id); }} className="btn btn-danger" style={{ padding: "4px 8px", fontSize: 12, minHeight: 28 }}>
+                      <Trash2 size={13} /> Xóa
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1822,7 +1843,7 @@ export default function VocabularyPage() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        .vocab-row .row-actions { opacity: 0; transition: opacity 0.15s; }
+        .vocab-row .row-actions { opacity: 0.85; transition: opacity 0.15s; }
         .vocab-row:hover .row-actions { opacity: 1; }
         @media (max-width: 768px) {
           .vocab-table { display: none !important; }

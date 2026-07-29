@@ -29,6 +29,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "ENGRAM – Học tiếng Anh thông minh",
   description: "Ứng dụng học từ vựng tiếng Anh với Spaced Repetition, Flashcard có ảnh & AI Writing.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
