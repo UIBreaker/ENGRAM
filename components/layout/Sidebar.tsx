@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Home, BookOpen, BrainCircuit, Target, Sparkles, Trophy,
-  BookMarked, MessageSquareMore,
   CheckSquare, Swords, UserCircle2, ChevronRight,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
@@ -25,8 +24,6 @@ const LEARNING_NAV: NavItem[] = [
   { href: "/",            icon: Home,               label: "Trang chủ",         color: "#FF5964" },
   { href: "/vocabulary",  icon: BookOpen,            label: "Kho từ vựng",       color: "#FFE052" },
   { href: "/flashcard",   icon: BrainCircuit,        label: "Ôn tập từ vựng",    color: "#9C8EFA" },
-  { href: "/stories",     icon: BookMarked,          label: "Sổ tay ngữ cảnh",   color: "#FF8E53", isNew: true },
-  { href: "/ai-chat",     icon: MessageSquareMore,   label: "Giao tiếp AI",      color: "#38E54D", isNew: true },
 ];
 
 const GAME_NAV: NavItem[] = [

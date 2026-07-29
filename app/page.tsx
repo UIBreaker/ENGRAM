@@ -356,9 +356,8 @@ export default function Dashboard() {
       >
         <QuickBtn href="/flashcard" icon={BrainCircuit} title="Ôn tập Flashcard"
           sub={due > 0 ? `${due} từ vựng đến hạn hôm nay` : "Đã ôn xong tất cả từ!"} bg="#9C8EFA" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
           <QuickBtn href="/practice"    icon={Target}            title="Luyện tập"      sub="4 dạng bài" bg="#4ECCD3" />
-          <QuickBtn href="/ai-chat"     icon={MessageSquareMore} title="Giao tiếp AI"   sub="Chat roleplay" bg="#38E54D" />
           <QuickBtn href="/quests"      icon={CheckSquare}       title="Nhiệm vụ"       sub="Daily quests" bg="#FFE052" />
           <QuickBtn href="/duel"        icon={Swords}            title="Thách đấu"      sub="1v1 battle" bg="#FF70A6" />
         </div>
@@ -524,7 +523,7 @@ export default function Dashboard() {
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 4 }}
       >
         {[
-          { href: "/stories",    emoji: "📖", label: "Ngữ cảnh", color: "#FF8E53" },
+          { href: "/practice",   emoji: "🎯", label: "Luyện tập", color: "#4ECCD3" },
           { href: "/quests",     emoji: "✅", label: "Nhiệm vụ", color: "#38E54D" },
           { href: "/vocabulary", emoji: "📚", label: "Kho từ vựng", color: "#FFE052" },
         ].map(({ href, emoji, label, color }) => (
