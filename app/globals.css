@@ -563,3 +563,17 @@ select.input option { background: var(--input-bg); color: var(--input-text); }
     padding-bottom: max(24px, env(safe-area-inset-bottom));
   }
 }
+
+/* ══════════════════════════════════════
+   HIDE NEXT.JS DEV INDICATOR BADGE
+══════════════════════════════════════ */
+nextjs-portal,
+#__next-build-watcher,
+[data-nextjs-toast],
+[data-nextjs-dialog-overlay],
+[data-next-mark] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
